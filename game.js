@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.8
-   DARK PISTOL FINISH + EDGE DETAIL
+   BUILD 3.9
+   CACHE-BUSTED DARK PISTOL RENDER
 ========================================================= */
 
 (function () {
@@ -930,11 +930,11 @@
 
 
                     let gunColor =
-                        0x25292e;
+                        0x1c2025;
 
 
                     let edgeColor =
-                        0x626b75;
+                        0x525a64;
 
 
                     /*
@@ -951,20 +951,20 @@
                         meshName.includes("mag")
                     ) {
                         gunColor =
-                            0x171a1e;
+                            0x111418;
 
                         edgeColor =
-                            0x3f464e;
+                            0x3a4149;
                     } else if (
                         meshName.includes("barrel") ||
                         meshName.includes("trigger") ||
                         meshName.includes("sight")
                     ) {
                         gunColor =
-                            0x1d2227;
+                            0x181d22;
 
                         edgeColor =
-                            0x747d87;
+                            0x626b75;
                     }
 
 
@@ -980,6 +980,15 @@
                                 false,
 
                             depthWrite:
+                                false,
+
+                            vertexColors:
+                                false,
+
+                            fog:
+                                false,
+
+                            toneMapped:
                                 false
                         });
 
@@ -1010,7 +1019,7 @@
                                     true,
 
                                 opacity:
-                                    0.34,
+                                    0.22,
 
                                 depthTest:
                                     false,
@@ -3412,6 +3421,20 @@
     /* =====================================================
        START
     ====================================================== */
+
+    /*
+       Definitive runtime version marker.
+       index.html cache-busts this file with ?v=39.
+    */
+
+    document.documentElement.dataset.zombiesBuild =
+        "3.9";
+
+
+    console.log(
+        "ZOMBIES BUILD 3.9 ACTIVE"
+    );
+
 
     updateCameraRotation();
 
