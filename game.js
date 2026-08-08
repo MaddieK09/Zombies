@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 2.2
-   HARD COLLISION + MOBILE HUD COMPATIBILITY
+   BUILD 3
+   FIRST-PERSON PISTOL + HITSCAN SHOOTING
 ========================================================= */
 
 (function () {
@@ -205,6 +205,19 @@
 
     const blockers = [];
 
+    /*
+       Meshes that bullets can hit.
+       Floor, walls, props, and solid obstacles all get registered here.
+    */
+    const worldHitMeshes = [];
+
+    /*
+       Temporary bullet impact marks.
+       We cap the number so the phone never accumulates thousands.
+    */
+    const bulletImpacts = [];
+    const MAX_BULLET_IMPACTS = 35;
+
 
     function addBlocker(
         x,
@@ -329,6 +342,10 @@
 
 
         scene.add(
+            mesh
+        );
+
+        worldHitMeshes.push(
             mesh
         );
 
@@ -591,6 +608,974 @@
         false,
         "lamp"
     );
+
+
+
+    /* =====================================================
+       FIRST-PERSON WEAPON
+    ====================================================== */
+
+    /*
+       The weapon is made from simple Three.js primitives for now.
+       Later we can swap this for a real 3D weapon model without
+       changing the firing/reload system.
+    */
+
+    scene.add(
+        camera
+    );
+
+
+    const weapon = {
+        group:
+            new THREE.Group(),
+
+        basePosition:
+            new THREE.Vector3(
+                0.36,
+                -0.34,
+                -0.72
+            ),
+
+        baseRotation:
+            new THREE.Euler(
+                -0.06,
+                -0.04,
+                0.015
+            ),
+
+        recoil:
+            0,
+
+        recoilVelocity:
+            0,
+
+        swayX:
+            0,
+
+        swayY:
+            0,
+
+        bobTime:
+            0,
+
+        muzzleFlashTime:
+            0,
+
+        reloadTime:
+            0,
+
+        reloadDuration:
+            1.15,
+
+        isReloading:
+            false
+    };
+
+
+    camera.add(
+        weapon.group
+    );
+
+
+    weapon.group.position.copy(
+        weapon.basePosition
+    );
+
+
+    weapon.group.rotation.copy(
+        weapon.baseRotation
+    );
+
+
+    function makeWeaponMaterial(
+        color,
+        roughness,
+        metalness
+    ) {
+        return new THREE.MeshStandardMaterial({
+            color: color,
+            roughness: roughness,
+            metalness: metalness,
+            depthTest: false,
+            depthWrite: false
+        });
+    }
+
+
+    const gunMetalMaterial =
+        makeWeaponMaterial(
+            0x24272b,
+            0.45,
+            0.55
+        );
+
+
+    const gunDarkMaterial =
+        makeWeaponMaterial(
+            0x101214,
+            0.6,
+            0.35
+        );
+
+
+    const gripMaterial =
+        makeWeaponMaterial(
+            0x17191b,
+            0.78,
+            0.08
+        );
+
+
+    const skinMaterial =
+        makeWeaponMaterial(
+            0xd0a17d,
+            0.92,
+            0
+        );
+
+
+    const sleeveMaterial =
+        makeWeaponMaterial(
+            0x2d3034,
+            0.9,
+            0
+        );
+
+
+    function createWeaponBox(
+        width,
+        height,
+        depth,
+        x,
+        y,
+        z,
+        material,
+        parent
+    ) {
+        const mesh =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    width,
+                    height,
+                    depth
+                ),
+                material
+            );
+
+
+        mesh.position.set(
+            x,
+            y,
+            z
+        );
+
+
+        mesh.renderOrder =
+            1000;
+
+
+        parent.add(
+            mesh
+        );
+
+
+        return mesh;
+    }
+
+
+    /*
+       Pistol slide.
+    */
+
+    const pistolSlide =
+        createWeaponBox(
+            0.20,
+            0.12,
+            0.48,
+            0,
+            0.02,
+            -0.08,
+            gunMetalMaterial,
+            weapon.group
+        );
+
+
+    /*
+       Barrel / front block.
+    */
+
+    createWeaponBox(
+        0.14,
+        0.09,
+        0.18,
+        0,
+        0.015,
+        -0.36,
+        gunDarkMaterial,
+        weapon.group
+    );
+
+
+    /*
+       Lower receiver.
+    */
+
+    createWeaponBox(
+        0.16,
+        0.11,
+        0.30,
+        0,
+        -0.085,
+        -0.02,
+        gunDarkMaterial,
+        weapon.group
+    );
+
+
+    /*
+       Grip.
+    */
+
+    const pistolGrip =
+        createWeaponBox(
+            0.14,
+            0.30,
+            0.16,
+            0,
+            -0.245,
+            0.035,
+            gripMaterial,
+            weapon.group
+        );
+
+
+    pistolGrip.rotation.x =
+        -0.18;
+
+
+    /*
+       Tiny front sight.
+    */
+
+    createWeaponBox(
+        0.035,
+        0.045,
+        0.055,
+        0,
+        0.10,
+        -0.28,
+        gunDarkMaterial,
+        weapon.group
+    );
+
+
+    /*
+       Right hand.
+    */
+
+    const rightHand =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                0.17,
+                0.18,
+                0.20
+            ),
+            skinMaterial
+        );
+
+
+    rightHand.position.set(
+        0.04,
+        -0.30,
+        0.08
+    );
+
+
+    rightHand.rotation.set(
+        0.08,
+        0,
+        0.08
+    );
+
+
+    rightHand.renderOrder =
+        1001;
+
+
+    weapon.group.add(
+        rightHand
+    );
+
+
+    /*
+       Right forearm / sleeve.
+    */
+
+    const rightForearm =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                0.19,
+                0.18,
+                0.50
+            ),
+            sleeveMaterial
+        );
+
+
+    rightForearm.position.set(
+        0.08,
+        -0.37,
+        0.31
+    );
+
+
+    rightForearm.rotation.set(
+        0.05,
+        -0.03,
+        0.08
+    );
+
+
+    rightForearm.renderOrder =
+        1000;
+
+
+    weapon.group.add(
+        rightForearm
+    );
+
+
+    /*
+       Supporting left hand.
+    */
+
+    const leftHand =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                0.15,
+                0.14,
+                0.18
+            ),
+            skinMaterial
+        );
+
+
+    leftHand.position.set(
+        -0.13,
+        -0.17,
+        -0.04
+    );
+
+
+    leftHand.rotation.set(
+        -0.18,
+        0.18,
+        -0.18
+    );
+
+
+    leftHand.renderOrder =
+        1001;
+
+
+    weapon.group.add(
+        leftHand
+    );
+
+
+    /*
+       Left forearm / sleeve.
+    */
+
+    const leftForearm =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                0.17,
+                0.17,
+                0.50
+            ),
+            sleeveMaterial
+        );
+
+
+    leftForearm.position.set(
+        -0.23,
+        -0.28,
+        0.29
+    );
+
+
+    leftForearm.rotation.set(
+        -0.08,
+        0.15,
+        -0.18
+    );
+
+
+    leftForearm.renderOrder =
+        1000;
+
+
+    weapon.group.add(
+        leftForearm
+    );
+
+
+    /*
+       Muzzle flash mesh.
+    */
+
+    const muzzleFlashMaterial =
+        new THREE.MeshBasicMaterial({
+            color: 0xffd36b,
+            transparent: true,
+            opacity: 0,
+            depthTest: false,
+            depthWrite: false
+        });
+
+
+    const muzzleFlash =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.065,
+                8,
+                6
+            ),
+            muzzleFlashMaterial
+        );
+
+
+    muzzleFlash.position.set(
+        0,
+        0.02,
+        -0.50
+    );
+
+
+    muzzleFlash.scale.set(
+        1.8,
+        0.85,
+        2.4
+    );
+
+
+    muzzleFlash.renderOrder =
+        1002;
+
+
+    weapon.group.add(
+        muzzleFlash
+    );
+
+
+    const muzzleLight =
+        new THREE.PointLight(
+            0xffb347,
+            0,
+            2.5
+        );
+
+
+    muzzleLight.position.set(
+        0,
+        0.02,
+        -0.50
+    );
+
+
+    weapon.group.add(
+        muzzleLight
+    );
+
+
+    /*
+       Raycaster used by hitscan weapons.
+    */
+
+    const weaponRaycaster =
+        new THREE.Raycaster();
+
+
+    const rayScreenCenter =
+        new THREE.Vector2(
+            0,
+            0
+        );
+
+
+    const impactMaterial =
+        new THREE.MeshBasicMaterial({
+            color: 0x171717,
+            depthWrite: false
+        });
+
+
+    function createBulletImpact(
+        point,
+        normal
+    ) {
+        const mark =
+            new THREE.Mesh(
+                new THREE.CircleGeometry(
+                    0.045,
+                    10
+                ),
+                impactMaterial.clone()
+            );
+
+
+        mark.position.copy(
+            point
+        );
+
+
+        /*
+           Push the mark very slightly off the surface
+           to prevent z-fighting.
+        */
+
+        mark.position.addScaledVector(
+            normal,
+            0.006
+        );
+
+
+        const lookTarget =
+            point.clone().add(
+                normal
+            );
+
+
+        mark.lookAt(
+            lookTarget
+        );
+
+
+        scene.add(
+            mark
+        );
+
+
+        bulletImpacts.push(
+            mark
+        );
+
+
+        if (
+            bulletImpacts.length >
+            MAX_BULLET_IMPACTS
+        ) {
+            const oldest =
+                bulletImpacts.shift();
+
+
+            scene.remove(
+                oldest
+            );
+
+
+            oldest.geometry.dispose();
+            oldest.material.dispose();
+        }
+    }
+
+
+    function fireHitscan() {
+        weaponRaycaster.setFromCamera(
+            rayScreenCenter,
+            camera
+        );
+
+
+        weaponRaycaster.far =
+            55;
+
+
+        const hits =
+            weaponRaycaster.intersectObjects(
+                worldHitMeshes,
+                false
+            );
+
+
+        if (
+            hits.length <= 0
+        ) {
+            return;
+        }
+
+
+        const hit =
+            hits[0];
+
+
+        if (
+            !hit.face
+        ) {
+            return;
+        }
+
+
+        const worldNormal =
+            hit.face.normal.clone();
+
+
+        const normalMatrix =
+            new THREE.Matrix3().getNormalMatrix(
+                hit.object.matrixWorld
+            );
+
+
+        worldNormal.applyMatrix3(
+            normalMatrix
+        ).normalize();
+
+
+        createBulletImpact(
+            hit.point,
+            worldNormal
+        );
+    }
+
+
+    function startMuzzleFlash() {
+        weapon.muzzleFlashTime =
+            0.065;
+
+
+        muzzleFlashMaterial.opacity =
+            0.95;
+
+
+        muzzleFlash.scale.set(
+            1.5 +
+                Math.random() *
+                0.8,
+            0.65 +
+                Math.random() *
+                0.35,
+            2.0 +
+                Math.random() *
+                1.0
+        );
+
+
+        muzzleLight.intensity =
+            2.5;
+    }
+
+
+    function addWeaponRecoil() {
+        weapon.recoilVelocity +=
+            0.115;
+
+
+        weapon.recoil =
+            Math.min(
+                weapon.recoil +
+                    0.025,
+                0.16
+            );
+
+
+        /*
+           Tiny camera kick.
+        */
+
+        player.pitch +=
+            0.010 +
+            Math.random() *
+            0.004;
+
+
+        player.yaw +=
+            (
+                Math.random() -
+                0.5
+            ) *
+            0.004;
+
+
+        updateCameraRotation();
+    }
+
+
+    function updateWeapon(
+        deltaTime,
+        moving,
+        speed
+    ) {
+        /*
+           Recoil spring.
+        */
+
+        weapon.recoilVelocity +=
+            (
+                -weapon.recoil *
+                28
+            ) *
+            deltaTime;
+
+
+        weapon.recoilVelocity *=
+            Math.pow(
+                0.0008,
+                deltaTime
+            );
+
+
+        weapon.recoil +=
+            weapon.recoilVelocity *
+            deltaTime;
+
+
+        weapon.recoil =
+            Math.max(
+                0,
+                weapon.recoil
+            );
+
+
+        /*
+           Walking bob.
+        */
+
+        if (
+            moving &&
+            speed > 0.15 &&
+            !weapon.isReloading
+        ) {
+            weapon.bobTime +=
+                deltaTime *
+                (
+                    7.5 +
+                    speed *
+                    0.55
+                );
+        }
+
+
+        const bobStrength =
+            moving
+                ? Math.min(
+                    speed /
+                    player.walkSpeed,
+                    1
+                )
+                : 0;
+
+
+        const bobX =
+            Math.sin(
+                weapon.bobTime
+            ) *
+            0.013 *
+            bobStrength;
+
+
+        const bobY =
+            Math.abs(
+                Math.cos(
+                    weapon.bobTime
+                )
+            ) *
+            0.010 *
+            bobStrength;
+
+
+        /*
+           Very subtle look sway.
+        */
+
+        const swayTargetX =
+            THREE.MathUtils.clamp(
+                pendingLookX *
+                    -0.020,
+                -0.035,
+                0.035
+            );
+
+
+        const swayTargetY =
+            THREE.MathUtils.clamp(
+                pendingLookY *
+                    0.020,
+                -0.025,
+                0.025
+            );
+
+
+        weapon.swayX +=
+            (
+                swayTargetX -
+                weapon.swayX
+            ) *
+            Math.min(
+                1,
+                deltaTime *
+                11
+            );
+
+
+        weapon.swayY +=
+            (
+                swayTargetY -
+                weapon.swayY
+            ) *
+            Math.min(
+                1,
+                deltaTime *
+                11
+            );
+
+
+        /*
+           Reload animation.
+        */
+
+        let reloadOffsetY =
+            0;
+
+        let reloadOffsetX =
+            0;
+
+        let reloadRoll =
+            0;
+
+        let reloadPitch =
+            0;
+
+
+        if (
+            weapon.isReloading
+        ) {
+            weapon.reloadTime +=
+                deltaTime;
+
+
+            const t =
+                Math.min(
+                    weapon.reloadTime /
+                    weapon.reloadDuration,
+                    1
+                );
+
+
+            /*
+               Down -> rotate -> come back.
+            */
+
+            reloadOffsetY =
+                -Math.sin(
+                    Math.PI *
+                    t
+                ) *
+                0.30;
+
+
+            reloadOffsetX =
+                Math.sin(
+                    Math.PI *
+                    t
+                ) *
+                0.08;
+
+
+            reloadRoll =
+                Math.sin(
+                    Math.PI *
+                    t
+                ) *
+                -0.75;
+
+
+            reloadPitch =
+                Math.sin(
+                    Math.PI *
+                    t
+                ) *
+                0.35;
+
+
+            if (
+                t >= 1
+            ) {
+                completeReload();
+            }
+        }
+
+
+        weapon.group.position.set(
+            weapon.basePosition.x +
+                bobX +
+                weapon.swayX +
+                reloadOffsetX,
+
+            weapon.basePosition.y -
+                bobY +
+                weapon.swayY +
+                reloadOffsetY,
+
+            weapon.basePosition.z +
+                weapon.recoil
+        );
+
+
+        weapon.group.rotation.set(
+            weapon.baseRotation.x +
+                weapon.recoil *
+                0.65 +
+                reloadPitch,
+
+            weapon.baseRotation.y +
+                weapon.swayX *
+                0.8,
+
+            weapon.baseRotation.z +
+                bobX *
+                -0.7 +
+                reloadRoll
+        );
+
+
+        /*
+           Muzzle flash decay.
+        */
+
+        if (
+            weapon.muzzleFlashTime >
+            0
+        ) {
+            weapon.muzzleFlashTime -=
+                deltaTime;
+
+
+            const ratio =
+                Math.max(
+                    0,
+                    weapon.muzzleFlashTime /
+                    0.065
+                );
+
+
+            muzzleFlashMaterial.opacity =
+                ratio;
+
+
+            muzzleLight.intensity =
+                ratio *
+                2.5;
+        } else {
+            muzzleFlashMaterial.opacity =
+                0;
+
+
+            muzzleLight.intensity =
+                0;
+        }
+    }
 
 
     /* =====================================================
@@ -1201,6 +2186,13 @@
                 bob,
             player.position.z
         );
+
+
+        updateWeapon(
+            deltaTime,
+            moving,
+            speed
+        );
     }
 
 
@@ -1742,7 +2734,7 @@
 
 
     /* =====================================================
-       FIRE / RELOAD INPUT TEST
+       FIRE / RELOAD
     ====================================================== */
 
     let magAmmo =
@@ -1750,6 +2742,22 @@
 
     let reserveAmmo =
         32;
+
+
+    const magazineSize =
+        8;
+
+
+    let lastFireTime =
+        -9999;
+
+
+    const fireInterval =
+        0.22;
+
+
+    let emptyClickCooldown =
+        0;
 
 
     function updateAmmoHUD() {
@@ -1781,6 +2789,164 @@
     }
 
 
+    function flashEmptyAmmo() {
+        if (
+            emptyClickCooldown >
+            0
+        ) {
+            return;
+        }
+
+
+        emptyClickCooldown =
+            0.18;
+
+
+        magAmmoElement.style.opacity =
+            "0.28";
+
+
+        setTimeout(
+            function () {
+                magAmmoElement.style.opacity =
+                    "1";
+            },
+            90
+        );
+    }
+
+
+    function tryFire() {
+        if (
+            weapon.isReloading
+        ) {
+            return;
+        }
+
+
+        const now =
+            performance.now() /
+            1000;
+
+
+        if (
+            now -
+            lastFireTime <
+            fireInterval
+        ) {
+            return;
+        }
+
+
+        lastFireTime =
+            now;
+
+
+        if (
+            magAmmo <= 0
+        ) {
+            flashEmptyAmmo();
+
+            return;
+        }
+
+
+        magAmmo -=
+            1;
+
+
+        updateAmmoHUD();
+
+        pulseCrosshair();
+
+        addWeaponRecoil();
+
+        startMuzzleFlash();
+
+        fireHitscan();
+    }
+
+
+    function startReload() {
+        if (
+            weapon.isReloading
+        ) {
+            return;
+        }
+
+
+        if (
+            magAmmo >=
+            magazineSize
+        ) {
+            return;
+        }
+
+
+        if (
+            reserveAmmo <= 0
+        ) {
+            return;
+        }
+
+
+        weapon.isReloading =
+            true;
+
+
+        weapon.reloadTime =
+            0;
+
+
+        reloadButton.style.opacity =
+            "0.5";
+    }
+
+
+    function completeReload() {
+        if (
+            !weapon.isReloading
+        ) {
+            return;
+        }
+
+
+        const needed =
+            magazineSize -
+            magAmmo;
+
+
+        const amount =
+            Math.min(
+                needed,
+                reserveAmmo
+            );
+
+
+        magAmmo +=
+            amount;
+
+
+        reserveAmmo -=
+            amount;
+
+
+        weapon.isReloading =
+            false;
+
+
+        weapon.reloadTime =
+            0;
+
+
+        reloadButton.style.opacity =
+            "1";
+
+
+        updateAmmoHUD();
+    }
+
+
     fireButton.addEventListener(
         "pointerdown",
         function (event) {
@@ -1788,20 +2954,7 @@
             event.stopPropagation();
 
 
-            if (
-                magAmmo <= 0
-            ) {
-                return;
-            }
-
-
-            magAmmo -=
-                1;
-
-
-            updateAmmoHUD();
-
-            pulseCrosshair();
+            tryFire();
         },
         {
             passive: false
@@ -1816,41 +2969,37 @@
             event.stopPropagation();
 
 
-            const magazineSize =
-                8;
-
-
-            const needed =
-                magazineSize -
-                magAmmo;
-
-
-            if (
-                needed <= 0 ||
-                reserveAmmo <= 0
-            ) {
-                return;
-            }
-
-
-            const amount =
-                Math.min(
-                    needed,
-                    reserveAmmo
-                );
-
-
-            magAmmo +=
-                amount;
-
-            reserveAmmo -=
-                amount;
-
-
-            updateAmmoHUD();
+            startReload();
         },
         {
             passive: false
+        }
+    );
+
+
+    /*
+       Desktop testing.
+    */
+
+    window.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                event.code ===
+                "Space"
+            ) {
+                event.preventDefault();
+
+                tryFire();
+            }
+
+
+            if (
+                event.code ===
+                "KeyR"
+            ) {
+                startReload();
+            }
         }
     );
 
@@ -1965,6 +3114,16 @@
 
         updateLook();
 
+
+        if (
+            emptyClickCooldown >
+            0
+        ) {
+            emptyClickCooldown -=
+                deltaTime;
+        }
+
+
         updateMovement(
             deltaTime
         );
@@ -1991,7 +3150,7 @@
 
 
     console.log(
-        "Zombies Build 2.2 loaded."
+        "Zombies Build 3 loaded: pistol + raycast shooting."
     );
 
 })();
