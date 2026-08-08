@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.4
-   REAL GLB PISTOL MODEL
+   BUILD 3.5
+   REAL PISTOL MATERIALS + WEAPON LIGHTING
 ========================================================= */
 
 (function () {
@@ -149,6 +149,65 @@
         0,
         0,
         0
+    );
+
+
+    /* =====================================================
+       WEAPON-SCENE LIGHTING
+
+       The GLB uses lit materials, so the dedicated first-person
+       scene needs its own lights. Without these, the real model
+       renders as a black silhouette.
+    ====================================================== */
+
+    const weaponAmbientLight =
+        new THREE.HemisphereLight(
+            0xffffff,
+            0x5f6670,
+            1.35
+        );
+
+
+    weaponScene.add(
+        weaponAmbientLight
+    );
+
+
+    const weaponKeyLight =
+        new THREE.DirectionalLight(
+            0xffffff,
+            1.75
+        );
+
+
+    weaponKeyLight.position.set(
+        -1.5,
+        2.0,
+        2.5
+    );
+
+
+    weaponScene.add(
+        weaponKeyLight
+    );
+
+
+    const weaponFillLight =
+        new THREE.DirectionalLight(
+            0xbfd4ff,
+            0.75
+        );
+
+
+    weaponFillLight.position.set(
+        2.0,
+        0.5,
+        1.0
+    );
+
+
+    weaponScene.add(
+        weaponFillLight
     );
 
 
@@ -673,16 +732,16 @@
 
         basePosition:
             new THREE.Vector3(
-                0.28,
-                -0.29,
-                -1.05
+                0.24,
+                -0.33,
+                -1.12
             ),
 
         baseRotation:
             new THREE.Euler(
-                -0.02,
-                -0.08,
-                0.015
+                -0.015,
+                -0.055,
+                0.010
             ),
 
         recoil:
@@ -846,7 +905,13 @@
                     if (
                         child.material
                     ) {
-                        const materials =
+                        /*
+                           Keep the GLB's original materials/colors.
+                           Only change depth behavior so the gun stays
+                           visible in the dedicated first-person pass.
+                        */
+
+                        const sourceMaterials =
                             Array.isArray(
                                 child.material
                             )
@@ -856,22 +921,75 @@
                                 ];
 
 
-                        materials.forEach(
-                            function (material) {
-                                material.depthTest =
-                                    false;
+                        const preparedMaterials =
+                            sourceMaterials.map(
+                                function (sourceMaterial) {
+                                    const material =
+                                        sourceMaterial.clone();
 
-                                material.depthWrite =
-                                    false;
 
-                                material.transparent =
-                                    material.transparent ||
-                                    false;
+                                    material.depthTest =
+                                        false;
 
-                                material.needsUpdate =
-                                    true;
-                            }
-                        );
+
+                                    material.depthWrite =
+                                        false;
+
+
+                                    material.side =
+                                        THREE.FrontSide;
+
+
+                                    /*
+                                       Avoid accidental near-black output
+                                       from unsupported/odd export settings.
+                                    */
+
+                                    if (
+                                        material.color &&
+                                        material.color.r < 0.03 &&
+                                        material.color.g < 0.03 &&
+                                        material.color.b < 0.03 &&
+                                        !material.map
+                                    ) {
+                                        material.color.setHex(
+                                            0x3c4148
+                                        );
+                                    }
+
+
+                                    /*
+                                       Tiny emissive lift prevents the pistol
+                                       from vanishing in very dark scenes while
+                                       retaining its actual material appearance.
+                                    */
+
+                                    if (
+                                        material.emissive
+                                    ) {
+                                        material.emissiveIntensity =
+                                            Math.max(
+                                                material.emissiveIntensity || 0,
+                                                0.10
+                                            );
+                                    }
+
+
+                                    material.needsUpdate =
+                                        true;
+
+
+                                    return material;
+                                }
+                            );
+
+
+                        child.material =
+                            Array.isArray(
+                                child.material
+                            )
+                                ? preparedMaterials
+                                : preparedMaterials[0];
                     }
 
 
@@ -1091,14 +1209,8 @@
 
 
             showError(
-    "PISTOL MODEL FAILED: " +
-    (
-        error &&
-        error.message
-            ? error.message
-            : String(error)
-    )
-);
+                "PISTOL MODEL FAILED TO LOAD. Make sure pistol.glb exists."
+            );
         }
     );
 
@@ -1350,14 +1462,14 @@
 
     function addWeaponRecoil() {
         weapon.recoilVelocity +=
-            0.095;
+            0.065;
 
 
         weapon.recoil =
             Math.min(
                 weapon.recoil +
-                    0.018,
-                0.12
+                    0.012,
+                0.085
             );
 
 
@@ -1366,9 +1478,9 @@
         */
 
         player.pitch +=
-            0.010 +
+            0.006 +
             Math.random() *
-            0.004;
+            0.002;
 
 
         player.yaw +=
@@ -1376,7 +1488,7 @@
                 Math.random() -
                 0.5
             ) *
-            0.004;
+            0.0025;
 
 
         updateCameraRotation();
@@ -1553,7 +1665,7 @@
                     Math.PI *
                     t
                 ) *
-                0.22;
+                0.16;
 
 
             reloadOffsetX =
@@ -1561,7 +1673,7 @@
                     Math.PI *
                     t
                 ) *
-                0.05;
+                0.035;
 
 
             reloadRoll =
@@ -1569,7 +1681,7 @@
                     Math.PI *
                     t
                 ) *
-                -0.55;
+                -0.38;
 
 
             reloadPitch =
@@ -1577,7 +1689,7 @@
                     Math.PI *
                     t
                 ) *
-                0.24;
+                0.16;
 
 
             if (
