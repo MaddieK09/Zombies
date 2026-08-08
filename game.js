@@ -1,7 +1,7 @@
 /* =========================================================
-   ZOMBIES - 3D FOUNDATION TEST
-   BUILD 2.1: MOVEMENT POLISH + HARDENED COLLISION
-   Stable non-module build for GitHub Pages + mobile Safari
+   ZOMBIES
+   BUILD 2.2
+   HARD COLLISION + MOBILE HUD COMPATIBILITY
 ========================================================= */
 
 (function () {
@@ -9,15 +9,50 @@
 
 
     /* =====================================================
-       ERROR SCREEN
+       DOM
     ====================================================== */
 
-    const errorBox = document.getElementById("game-error");
+    const canvas =
+        document.getElementById("game");
+
+    const gameContainer =
+        document.getElementById("game-container");
+
+    const moveStick =
+        document.getElementById("move-stick");
+
+    const moveKnob =
+        document.getElementById("move-knob");
+
+    const fireButton =
+        document.getElementById("fire-button");
+
+    const reloadButton =
+        document.getElementById("reload-button");
+
+    const magAmmoElement =
+        document.getElementById("mag-ammo");
+
+    const reserveAmmoElement =
+        document.getElementById("reserve-ammo");
+
+    const crosshair =
+        document.getElementById("crosshair");
+
+    const errorBox =
+        document.getElementById("game-error");
+
+
+    /* =====================================================
+       ERROR DISPLAY
+    ====================================================== */
 
     function showError(message) {
         console.error(message);
 
-        if (!errorBox) return;
+        if (!errorBox) {
+            return;
+        }
 
         errorBox.hidden = false;
 
@@ -25,135 +60,97 @@
         errorBox.style.left = "50%";
         errorBox.style.top = "50%";
         errorBox.style.transform = "translate(-50%, -50%)";
-        errorBox.style.zIndex = "99999";
-        errorBox.style.maxWidth = "80%";
-        errorBox.style.padding = "18px 22px";
-        errorBox.style.border = "2px solid white";
-        errorBox.style.borderRadius = "12px";
-        errorBox.style.background = "rgba(0,0,0,0.9)";
+
+        errorBox.style.padding = "16px";
+
         errorBox.style.color = "white";
-        errorBox.style.fontFamily = "Arial, sans-serif";
-        errorBox.style.fontSize = "16px";
-        errorBox.style.textAlign = "center";
-        errorBox.style.pointerEvents = "none";
+        errorBox.style.background = "rgba(0, 0, 0, 0.9)";
+        errorBox.style.border = "2px solid white";
+        errorBox.style.borderRadius = "10px";
 
         errorBox.textContent = message;
     }
 
 
-    window.addEventListener("error", function (event) {
-        if (event && event.message) {
-            showError("GAME ERROR: " + event.message);
-        }
-    });
-
-
     if (typeof THREE === "undefined") {
         showError(
-            "THREE.JS FAILED TO LOAD. Check your internet connection, then refresh the page."
+            "THREE.JS FAILED TO LOAD."
         );
+
         return;
     }
 
 
     /* =====================================================
-       DOM
+       THREE CORE
     ====================================================== */
 
-    const canvas = document.getElementById("game");
-    const gameContainer = document.getElementById("game-container");
-
-    const moveStick = document.getElementById("move-stick");
-    const moveKnob = document.getElementById("move-knob");
-
-    const fireButton = document.getElementById("fire-button");
-    const reloadButton = document.getElementById("reload-button");
-
-    const magAmmoElement = document.getElementById("mag-ammo");
-    const reserveAmmoElement = document.getElementById("reserve-ammo");
+    const scene =
+        new THREE.Scene();
 
 
-    if (
-        !canvas ||
-        !gameContainer ||
-        !moveStick ||
-        !moveKnob ||
-        !fireButton ||
-        !reloadButton
-    ) {
-        showError("GAME ERROR: One or more required HTML elements are missing.");
-        return;
-    }
+    scene.background =
+        new THREE.Color(
+            0x15171c
+        );
 
 
-    /* =====================================================
-       SCENE
-    ====================================================== */
-
-    const scene = new THREE.Scene();
-
-    scene.background = new THREE.Color(0x15171c);
-
-    scene.fog = new THREE.Fog(
-        0x15171c,
-        18,
-        45
-    );
+    scene.fog =
+        new THREE.Fog(
+            0x15171c,
+            18,
+            45
+        );
 
 
-    /* =====================================================
-       CAMERA
-    ====================================================== */
-
-    const camera = new THREE.PerspectiveCamera(
-        72,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        100
-    );
-
-    camera.rotation.order = "YXZ";
+    const camera =
+        new THREE.PerspectiveCamera(
+            72,
+            1,
+            0.1,
+            100
+        );
 
 
-    /* =====================================================
-       RENDERER
-    ====================================================== */
+    camera.rotation.order =
+        "YXZ";
+
 
     let renderer;
 
+
     try {
-        renderer = new THREE.WebGLRenderer({
-            canvas: canvas,
-            antialias: true,
-            alpha: false,
-            powerPreference: "high-performance"
-        });
+        renderer =
+            new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true,
+                powerPreference: "high-performance"
+            });
     } catch (error) {
         showError(
-            "WEBGL COULD NOT START: " +
-            (error && error.message ? error.message : "Unknown error")
+            "WEBGL COULD NOT START."
         );
+
         return;
     }
 
 
-    renderer.setPixelRatio(
-        Math.min(
-            window.devicePixelRatio || 1,
-            2
-        )
-    );
-
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight,
-        false
-    );
-
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.shadowMap.type =
+        THREE.PCFSoftShadowMap;
+
+    renderer.outputEncoding =
+        THREE.sRGBEncoding;
+
+
+    /* =====================================================
+       ROOM
+    ====================================================== */
+
+    const ROOM_WIDTH = 18;
+    const ROOM_DEPTH = 22;
+    const ROOM_HEIGHT = 6;
 
 
     /* =====================================================
@@ -161,12 +158,25 @@
     ====================================================== */
 
     const player = {
-        x: 0,
-        y: 1.65,
-        z: 7,
+        position:
+            new THREE.Vector3(
+                0,
+                1.65,
+                7
+            ),
 
         yaw: 0,
         pitch: 0,
+
+        velocity:
+            new THREE.Vector3(),
+
+        walkSpeed: 4.15,
+
+        acceleration: 20,
+        deceleration: 16,
+
+        radius: 0.55,
 
         joystickForward: 0,
         joystickRight: 0,
@@ -174,69 +184,65 @@
         keyboardForward: 0,
         keyboardRight: 0,
 
-        velocityX: 0,
-        velocityZ: 0,
-
-        walkSpeed: 4.25,
-        acceleration: 18,
-        deceleration: 14,
-
-        radius: 0.38,
-
-        touchSensitivity: 0.0038,
+        touchSensitivity: 0.0037,
         mouseSensitivity: 0.0028,
 
-        cameraBobTime: 0,
-        cameraBobAmount: 0.025,
-        cameraBobSpeed: 9
+        bobTime: 0
     };
 
 
-    camera.position.set(
-        player.x,
-        player.y,
-        player.z
-    );
-
-
     /* =====================================================
-       ROOM DIMENSIONS
+       COLLISION WORLD
     ====================================================== */
 
-    const ROOM_WIDTH = 18;
-    const ROOM_DEPTH = 22;
-    const ROOM_HEIGHT = 6;
+    /*
+       Every obstacle is stored as a 2D X/Z rectangle.
 
-    const WALL_PADDING = 0.45;
+       We expand the rectangles by player.radius when checking
+       collision, which is equivalent to treating the player
+       like a circular/capsule footprint for this simple map.
+    */
 
-
-    /* =====================================================
-       COLLISION OBJECTS
-    ====================================================== */
-
-    const collisionBoxes = [];
+    const blockers = [];
 
 
-    function addCollisionBox(
-        centerX,
-        centerZ,
+    function addBlocker(
+        x,
+        z,
         width,
-        depth
+        depth,
+        name
     ) {
-        collisionBoxes.push({
-            minX: centerX - width / 2,
-            maxX: centerX + width / 2,
-            minZ: centerZ - depth / 2,
-            maxZ: centerZ + depth / 2
+        blockers.push({
+            name: name,
+
+            minX:
+                x -
+                width / 2,
+
+            maxX:
+                x +
+                width / 2,
+
+            minZ:
+                z -
+                depth / 2,
+
+            maxZ:
+                z +
+                depth / 2
         });
     }
 
 
     /* =====================================================
-       MATERIALS
+       MATERIAL HELPER
     ====================================================== */
 
-    function material(color, roughness) {
+    function makeMaterial(
+        color,
+        roughness
+    ) {
         return new THREE.MeshStandardMaterial({
             color: color,
             roughness: roughness,
@@ -245,16 +251,45 @@
     }
 
 
-    const floorMaterial = material(0x4a4a49, 0.95);
-    const wallMaterial = material(0x77736a, 0.9);
-    const ceilingMaterial = material(0x343434, 1);
-    const darkMaterial = material(0x2a211d, 0.9);
-    const crateMaterial = material(0x553b27, 0.9);
-    const redMaterial = material(0x8f2020, 0.85);
+    const floorMaterial =
+        makeMaterial(
+            0x4a4a49,
+            0.95
+        );
+
+    const wallMaterial =
+        makeMaterial(
+            0x77736a,
+            0.9
+        );
+
+    const ceilingMaterial =
+        makeMaterial(
+            0x343434,
+            1
+        );
+
+    const darkMaterial =
+        makeMaterial(
+            0x2a211d,
+            0.9
+        );
+
+    const crateMaterial =
+        makeMaterial(
+            0x553b27,
+            0.9
+        );
+
+    const redMaterial =
+        makeMaterial(
+            0x8f2020,
+            0.85
+        );
 
 
     /* =====================================================
-       BOX HELPER
+       BOX CREATION
     ====================================================== */
 
     function createBox(
@@ -264,20 +299,20 @@
         x,
         y,
         z,
-        meshMaterial,
-        castShadow,
-        receiveShadow
+        material,
+        solid,
+        name
     ) {
-        const geometry = new THREE.BoxGeometry(
-            width,
-            height,
-            depth
-        );
+        const mesh =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    width,
+                    height,
+                    depth
+                ),
+                material
+            );
 
-        const mesh = new THREE.Mesh(
-            geometry,
-            meshMaterial
-        );
 
         mesh.position.set(
             x,
@@ -285,51 +320,36 @@
             z
         );
 
-        mesh.castShadow = !!castShadow;
-        mesh.receiveShadow = receiveShadow !== false;
 
-        scene.add(mesh);
+        mesh.castShadow =
+            !!solid;
 
-        return mesh;
-    }
+        mesh.receiveShadow =
+            true;
 
 
-    function createSolidBox(
-        width,
-        height,
-        depth,
-        x,
-        y,
-        z,
-        meshMaterial,
-        castShadow,
-        receiveShadow
-    ) {
-        const mesh = createBox(
-            width,
-            height,
-            depth,
-            x,
-            y,
-            z,
-            meshMaterial,
-            castShadow,
-            receiveShadow
+        scene.add(
+            mesh
         );
 
-        addCollisionBox(
-            x,
-            z,
-            width,
-            depth
-        );
+
+        if (solid) {
+            addBlocker(
+                x,
+                z,
+                width,
+                depth,
+                name
+            );
+        }
+
 
         return mesh;
     }
 
 
     /* =====================================================
-       FLOOR
+       FLOOR + CEILING
     ====================================================== */
 
     createBox(
@@ -341,13 +361,9 @@
         0,
         floorMaterial,
         false,
-        true
+        "floor"
     );
 
-
-    /* =====================================================
-       CEILING
-    ====================================================== */
 
     createBox(
         ROOM_WIDTH,
@@ -358,7 +374,7 @@
         0,
         ceilingMaterial,
         false,
-        true
+        "ceiling"
     );
 
 
@@ -375,8 +391,9 @@
         0,
         wallMaterial,
         false,
-        true
+        "left wall"
     );
+
 
     createBox(
         0.3,
@@ -387,8 +404,9 @@
         0,
         wallMaterial,
         false,
-        true
+        "right wall"
     );
+
 
     createBox(
         ROOM_WIDTH,
@@ -399,8 +417,9 @@
         -ROOM_DEPTH / 2,
         wallMaterial,
         false,
-        true
+        "back wall"
     );
+
 
     createBox(
         ROOM_WIDTH,
@@ -411,15 +430,15 @@
         ROOM_DEPTH / 2,
         wallMaterial,
         false,
-        true
+        "front wall"
     );
 
 
     /* =====================================================
-       SOLID ROOM OBJECTS
+       SOLID OBJECTS
     ====================================================== */
 
-    createSolidBox(
+    createBox(
         1.4,
         4.2,
         1.4,
@@ -428,11 +447,11 @@
         0,
         darkMaterial,
         true,
-        true
+        "pillar"
     );
 
 
-    createSolidBox(
+    createBox(
         2.4,
         1.6,
         2,
@@ -441,11 +460,11 @@
         -3.5,
         crateMaterial,
         true,
-        true
+        "crate A"
     );
 
 
-    createSolidBox(
+    createBox(
         2.8,
         1.1,
         1.8,
@@ -454,11 +473,11 @@
         2,
         crateMaterial,
         true,
-        true
+        "crate B"
     );
 
 
-    createSolidBox(
+    createBox(
         1.7,
         2.2,
         1.7,
@@ -467,15 +486,19 @@
         -5.5,
         crateMaterial,
         true,
-        true
+        "crate C"
     );
 
 
     /* =====================================================
-       WALL MARKERS
+       VISUAL MARKERS
     ====================================================== */
 
-    for (let z = -8; z <= 8; z += 4) {
+    for (
+        let z = -8;
+        z <= 8;
+        z += 4
+    ) {
         createBox(
             0.15,
             2.1,
@@ -485,46 +508,77 @@
             z,
             redMaterial,
             false,
-            true
+            "marker"
         );
     }
+
+
+    /* =====================================================
+       FLOOR GRID
+    ====================================================== */
+
+    const grid =
+        new THREE.GridHelper(
+            18,
+            18,
+            0x777777,
+            0x555555
+        );
+
+
+    grid.position.y =
+        0.01;
+
+
+    scene.add(
+        grid
+    );
 
 
     /* =====================================================
        LIGHTING
     ====================================================== */
 
-    const hemisphere = new THREE.HemisphereLight(
-        0x9bb7db,
-        0x211710,
-        1.2
+    scene.add(
+        new THREE.HemisphereLight(
+            0x9bb7db,
+            0x211710,
+            1.2
+        )
     );
 
-    scene.add(hemisphere);
+
+    const roomLight =
+        new THREE.PointLight(
+            0xffd7a8,
+            2.2,
+            26
+        );
 
 
-    const ceilingLight = new THREE.PointLight(
-        0xffd7a8,
-        2.2,
-        26
-    );
-
-    ceilingLight.position.set(
+    roomLight.position.set(
         0,
         5.25,
         0
     );
 
-    ceilingLight.castShadow = true;
 
-    scene.add(ceilingLight);
+    roomLight.castShadow =
+        true;
 
 
-    const lampMaterial = new THREE.MeshStandardMaterial({
-        color: 0xffddb0,
-        emissive: 0xffa23c,
-        emissiveIntensity: 1.5
-    });
+    scene.add(
+        roomLight
+    );
+
+
+    const lampMaterial =
+        new THREE.MeshStandardMaterial({
+            color: 0xffddb0,
+            emissive: 0xffa23c,
+            emissiveIntensity: 1.5
+        });
+
 
     createBox(
         2.6,
@@ -535,104 +589,69 @@
         0,
         lampMaterial,
         false,
-        false
+        "lamp"
     );
 
 
     /* =====================================================
-       FLOOR GRID
+       COLLISION HELPERS
     ====================================================== */
 
-    const grid = new THREE.GridHelper(
-        18,
-        18,
-        0x777777,
-        0x555555
-    );
-
-    grid.position.y = 0.01;
-
-    scene.add(grid);
-
-
-    /* =====================================================
-       CAMERA ROTATION
-    ====================================================== */
-
-    function updateCameraRotation() {
-        const pitchLimit =
-            Math.PI / 2 - 0.08;
-
-        player.pitch = THREE.MathUtils.clamp(
-            player.pitch,
-            -pitchLimit,
-            pitchLimit
-        );
-
-        camera.rotation.y = player.yaw;
-        camera.rotation.x = player.pitch;
-    }
-
-
-    /* =====================================================
-       COLLISION
-    ====================================================== */
-
-    /*
-        BUILD 2.1 COLLISION FIX
-
-        Instead of testing a circle against the raw object box,
-        we expand every obstacle by the player's radius and treat
-        the player's X/Z position as a point.
-
-        Movement is also split into small substeps so the player
-        cannot "tunnel" through thin or small objects between frames.
-    */
-
-    function pointInsideExpandedBox(
+    function insideExpandedBlocker(
         x,
         z,
-        box
+        blocker
     ) {
         return (
-            x >= box.minX - player.radius &&
-            x <= box.maxX + player.radius &&
-            z >= box.minZ - player.radius &&
-            z <= box.maxZ + player.radius
+            x >
+                blocker.minX -
+                player.radius &&
+
+            x <
+                blocker.maxX +
+                player.radius &&
+
+            z >
+                blocker.minZ -
+                player.radius &&
+
+            z <
+                blocker.maxZ +
+                player.radius
         );
     }
 
 
-    function collidesAt(
+    function isPositionBlocked(
         x,
         z
     ) {
-        const minX =
+        const roomMinX =
             -ROOM_WIDTH / 2 +
-            WALL_PADDING +
-            player.radius;
+            player.radius +
+            0.2;
 
-        const maxX =
+        const roomMaxX =
             ROOM_WIDTH / 2 -
-            WALL_PADDING -
-            player.radius;
+            player.radius -
+            0.2;
 
-        const minZ =
+        const roomMinZ =
             -ROOM_DEPTH / 2 +
-            WALL_PADDING +
-            player.radius;
+            player.radius +
+            0.2;
 
-        const maxZ =
+        const roomMaxZ =
             ROOM_DEPTH / 2 -
-            WALL_PADDING -
-            player.radius;
+            player.radius -
+            0.2;
 
 
         if (
-            x < minX ||
-            x > maxX ||
-            z < minZ ||
-            z > maxZ
+            x < roomMinX ||
+            x > roomMaxX ||
+            z < roomMinZ ||
+            z > roomMaxZ
         ) {
             return true;
         }
@@ -640,14 +659,14 @@
 
         for (
             let i = 0;
-            i < collisionBoxes.length;
+            i < blockers.length;
             i += 1
         ) {
             if (
-                pointInsideExpandedBox(
+                insideExpandedBlocker(
                     x,
                     z,
-                    collisionBoxes[i]
+                    blockers[i]
                 )
             ) {
                 return true;
@@ -659,98 +678,232 @@
     }
 
 
-    function moveSingleCollisionStep(
-        deltaX,
-        deltaZ
-    ) {
-        /*
-            Test X and Z independently so the player slides
-            along walls and crates instead of stopping completely.
-        */
+    /*
+       If the player ever somehow appears inside a solid,
+       this forcibly pushes them to the nearest outside edge.
 
-        if (
-            deltaX !== 0
+       This is important because it makes collision self-correcting
+       even after a lag spike or unexpected browser frame.
+    */
+
+    function resolvePenetration() {
+        for (
+            let i = 0;
+            i < blockers.length;
+            i += 1
         ) {
-            const nextX =
-                player.x + deltaX;
+            const box =
+                blockers[i];
+
+
+            const minX =
+                box.minX -
+                player.radius;
+
+            const maxX =
+                box.maxX +
+                player.radius;
+
+            const minZ =
+                box.minZ -
+                player.radius;
+
+            const maxZ =
+                box.maxZ +
+                player.radius;
+
+
+            const x =
+                player.position.x;
+
+            const z =
+                player.position.z;
+
 
             if (
-                !collidesAt(
-                    nextX,
-                    player.z
-                )
+                x <= minX ||
+                x >= maxX ||
+                z <= minZ ||
+                z >= maxZ
             ) {
-                player.x = nextX;
-            } else {
-                player.velocityX = 0;
+                continue;
             }
-        }
 
 
-        if (
-            deltaZ !== 0
-        ) {
-            const nextZ =
-                player.z + deltaZ;
+            const distanceLeft =
+                Math.abs(
+                    x -
+                    minX
+                );
+
+            const distanceRight =
+                Math.abs(
+                    maxX -
+                    x
+                );
+
+            const distanceBack =
+                Math.abs(
+                    z -
+                    minZ
+                );
+
+            const distanceFront =
+                Math.abs(
+                    maxZ -
+                    z
+                );
+
+
+            const smallest =
+                Math.min(
+                    distanceLeft,
+                    distanceRight,
+                    distanceBack,
+                    distanceFront
+                );
+
 
             if (
-                !collidesAt(
-                    player.x,
-                    nextZ
-                )
+                smallest ===
+                distanceLeft
             ) {
-                player.z = nextZ;
+                player.position.x =
+                    minX -
+                    0.001;
+
+                player.velocity.x = 0;
+            } else if (
+                smallest ===
+                distanceRight
+            ) {
+                player.position.x =
+                    maxX +
+                    0.001;
+
+                player.velocity.x = 0;
+            } else if (
+                smallest ===
+                distanceBack
+            ) {
+                player.position.z =
+                    minZ -
+                    0.001;
+
+                player.velocity.z = 0;
             } else {
-                player.velocityZ = 0;
+                player.position.z =
+                    maxZ +
+                    0.001;
+
+                player.velocity.z = 0;
             }
         }
     }
 
 
-    function moveWithCollision(
+    function moveAxisX(
+        amount
+    ) {
+        if (
+            amount === 0
+        ) {
+            return;
+        }
+
+
+        const nextX =
+            player.position.x +
+            amount;
+
+
+        if (
+            isPositionBlocked(
+                nextX,
+                player.position.z
+            )
+        ) {
+            player.velocity.x = 0;
+
+            return;
+        }
+
+
+        player.position.x =
+            nextX;
+    }
+
+
+    function moveAxisZ(
+        amount
+    ) {
+        if (
+            amount === 0
+        ) {
+            return;
+        }
+
+
+        const nextZ =
+            player.position.z +
+            amount;
+
+
+        if (
+            isPositionBlocked(
+                player.position.x,
+                nextZ
+            )
+        ) {
+            player.velocity.z = 0;
+
+            return;
+        }
+
+
+        player.position.z =
+            nextZ;
+    }
+
+
+    function movePlayerWithCollision(
         deltaX,
         deltaZ
     ) {
         /*
-            Break large frame movement into tiny pieces.
-
-            This prevents tunneling if the phone has a lag spike
-            or the player is moving diagonally at full speed.
+           Very small maximum movement step.
+           At normal speed this usually means 2-4 collision checks
+           per frame and prevents passing through objects.
         */
 
-        const totalDistance =
+        const distance =
             Math.hypot(
                 deltaX,
                 deltaZ
             );
 
 
-        if (
-            totalDistance <= 0
-        ) {
-            return;
-        }
-
-
-        const MAX_COLLISION_STEP =
-            0.05;
+        const maxStep =
+            0.025;
 
 
         const steps =
             Math.max(
                 1,
                 Math.ceil(
-                    totalDistance /
-                    MAX_COLLISION_STEP
+                    distance /
+                    maxStep
                 )
             );
 
 
         const stepX =
-            deltaX / steps;
+            deltaX /
+            steps;
 
         const stepZ =
-            deltaZ / steps;
+            deltaZ /
+            steps;
 
 
         for (
@@ -758,16 +911,78 @@
             i < steps;
             i += 1
         ) {
-            moveSingleCollisionStep(
-                stepX,
+            moveAxisX(
+                stepX
+            );
+
+            moveAxisZ(
                 stepZ
             );
+
+            resolvePenetration();
         }
+
+
+        /*
+           Clamp to room after object collision too.
+        */
+
+        player.position.x =
+            THREE.MathUtils.clamp(
+                player.position.x,
+                -ROOM_WIDTH / 2 +
+                    player.radius +
+                    0.2,
+                ROOM_WIDTH / 2 -
+                    player.radius -
+                    0.2
+            );
+
+
+        player.position.z =
+            THREE.MathUtils.clamp(
+                player.position.z,
+                -ROOM_DEPTH / 2 +
+                    player.radius +
+                    0.2,
+                ROOM_DEPTH / 2 -
+                    player.radius -
+                    0.2
+            );
+
+
+        resolvePenetration();
     }
 
 
     /* =====================================================
-       MOVEMENT
+       LOOK
+    ====================================================== */
+
+    function updateCameraRotation() {
+        const limit =
+            Math.PI / 2 -
+            0.08;
+
+
+        player.pitch =
+            THREE.MathUtils.clamp(
+                player.pitch,
+                -limit,
+                limit
+            );
+
+
+        camera.rotation.y =
+            player.yaw;
+
+        camera.rotation.x =
+            player.pitch;
+    }
+
+
+    /* =====================================================
+       MOVEMENT INPUT
     ====================================================== */
 
     const forwardVector =
@@ -776,11 +991,11 @@
     const rightVector =
         new THREE.Vector3();
 
-    const targetMove =
+    const desiredDirection =
         new THREE.Vector3();
 
 
-    function getMovementInput() {
+    function getInput() {
         let forward =
             player.joystickForward +
             player.keyboardForward;
@@ -789,6 +1004,7 @@
             player.joystickRight +
             player.keyboardRight;
 
+
         const length =
             Math.hypot(
                 forward,
@@ -796,9 +1012,14 @@
             );
 
 
-        if (length > 1) {
-            forward /= length;
-            right /= length;
+        if (
+            length > 1
+        ) {
+            forward /=
+                length;
+
+            right /=
+                length;
         }
 
 
@@ -814,199 +1035,229 @@
         target,
         amount
     ) {
-        if (current < target) {
+        if (
+            current < target
+        ) {
             return Math.min(
                 current + amount,
                 target
             );
         }
 
-        if (current > target) {
+
+        if (
+            current > target
+        ) {
             return Math.max(
                 current - amount,
                 target
             );
         }
 
+
         return target;
     }
 
 
-    function updatePlayer(
+    function updateMovement(
         deltaTime
     ) {
         const input =
-            getMovementInput();
+            getInput();
 
 
         forwardVector.set(
-            -Math.sin(player.yaw),
+            -Math.sin(
+                player.yaw
+            ),
             0,
-            -Math.cos(player.yaw)
+            -Math.cos(
+                player.yaw
+            )
         );
 
 
         rightVector.set(
-            Math.cos(player.yaw),
+            Math.cos(
+                player.yaw
+            ),
             0,
-            -Math.sin(player.yaw)
+            -Math.sin(
+                player.yaw
+            )
         );
 
 
-        targetMove.set(
+        desiredDirection.set(
             0,
             0,
             0
         );
 
 
-        targetMove.addScaledVector(
+        desiredDirection.addScaledVector(
             forwardVector,
             input.forward
         );
 
 
-        targetMove.addScaledVector(
+        desiredDirection.addScaledVector(
             rightVector,
             input.right
         );
 
 
         if (
-            targetMove.lengthSq() > 1
+            desiredDirection.lengthSq() >
+            1
         ) {
-            targetMove.normalize();
+            desiredDirection.normalize();
         }
 
 
-        const targetVelocityX =
-            targetMove.x *
+        const targetX =
+            desiredDirection.x *
             player.walkSpeed;
 
-        const targetVelocityZ =
-            targetMove.z *
+        const targetZ =
+            desiredDirection.z *
             player.walkSpeed;
 
 
-        const hasMovementInput =
-            Math.abs(input.forward) > 0.01 ||
-            Math.abs(input.right) > 0.01;
+        const moving =
+            Math.abs(
+                input.forward
+            ) > 0.01 ||
+            Math.abs(
+                input.right
+            ) > 0.01;
 
 
         const rate =
-            hasMovementInput
+            moving
                 ? player.acceleration
                 : player.deceleration;
 
 
-        player.velocityX =
+        player.velocity.x =
             approach(
-                player.velocityX,
-                targetVelocityX,
+                player.velocity.x,
+                targetX,
                 rate * deltaTime
             );
 
 
-        player.velocityZ =
+        player.velocity.z =
             approach(
-                player.velocityZ,
-                targetVelocityZ,
+                player.velocity.z,
+                targetZ,
                 rate * deltaTime
             );
 
 
-        moveWithCollision(
-            player.velocityX * deltaTime,
-            player.velocityZ * deltaTime
+        movePlayerWithCollision(
+            player.velocity.x *
+                deltaTime,
+
+            player.velocity.z *
+                deltaTime
         );
 
 
-        const horizontalSpeed =
+        const speed =
             Math.hypot(
-                player.velocityX,
-                player.velocityZ
+                player.velocity.x,
+                player.velocity.z
             );
 
 
-        let bobY = 0;
+        let bob =
+            0;
 
 
         if (
-            horizontalSpeed > 0.15 &&
-            hasMovementInput
+            moving &&
+            speed > 0.15
         ) {
-            player.cameraBobTime +=
+            player.bobTime +=
                 deltaTime *
-                player.cameraBobSpeed *
-                (
-                    0.65 +
-                    horizontalSpeed /
-                    player.walkSpeed *
-                    0.35
-                );
+                8.5;
 
 
-            bobY =
+            bob =
                 Math.sin(
-                    player.cameraBobTime
+                    player.bobTime
                 ) *
-                player.cameraBobAmount;
+                0.022;
         } else {
-            player.cameraBobTime = 0;
+            player.bobTime =
+                0;
         }
 
 
         camera.position.set(
-            player.x,
-            player.y + bobY,
-            player.z
+            player.position.x,
+            player.position.y +
+                bob,
+            player.position.z
         );
     }
 
 
     /* =====================================================
-       MOBILE JOYSTICK
+       JOYSTICK
     ====================================================== */
 
-    let joystickPointerId = null;
+    let joystickPointerId =
+        null;
 
-    let joystickCenterX = 0;
-    let joystickCenterY = 0;
+    let joystickCenterX =
+        0;
 
-    const JOYSTICK_MAX = 42;
-    const JOYSTICK_DEADZONE = 0.12;
+    let joystickCenterY =
+        0;
+
+    const joystickRadius =
+        42;
+
+    const joystickDeadzone =
+        0.12;
 
 
-    function applyDeadzone(value) {
-        const abs =
-            Math.abs(value);
+    function deadzone(
+        value
+    ) {
+        const absolute =
+            Math.abs(
+                value
+            );
+
 
         if (
-            abs < JOYSTICK_DEADZONE
+            absolute <
+            joystickDeadzone
         ) {
             return 0;
         }
 
 
-        const normalized =
+        return (
+            Math.sign(
+                value
+            ) *
             (
-                abs -
-                JOYSTICK_DEADZONE
+                absolute -
+                joystickDeadzone
             ) /
             (
                 1 -
-                JOYSTICK_DEADZONE
-            );
-
-
-        return (
-            Math.sign(value) *
-            normalized
+                joystickDeadzone
+            )
         );
     }
 
 
-    function setJoystickPosition(
+    function updateJoystick(
         clientX,
         clientY
     ) {
@@ -1028,14 +1279,18 @@
 
         if (
             distance >
-            JOYSTICK_MAX
+            joystickRadius
         ) {
             const scale =
-                JOYSTICK_MAX /
+                joystickRadius /
                 distance;
 
-            dx *= scale;
-            dy *= scale;
+
+            dx *=
+                scale;
+
+            dy *=
+                scale;
         }
 
 
@@ -1048,25 +1303,31 @@
 
 
         player.joystickRight =
-            applyDeadzone(
+            deadzone(
                 dx /
-                JOYSTICK_MAX
+                joystickRadius
             );
 
 
         player.joystickForward =
-            applyDeadzone(
+            deadzone(
                 -dy /
-                JOYSTICK_MAX
+                joystickRadius
             );
     }
 
 
     function resetJoystick() {
-        joystickPointerId = null;
+        joystickPointerId =
+            null;
 
-        player.joystickForward = 0;
-        player.joystickRight = 0;
+
+        player.joystickForward =
+            0;
+
+        player.joystickRight =
+            0;
+
 
         moveKnob.style.transform =
             "translate(-50%, -50%)";
@@ -1078,6 +1339,7 @@
         function (event) {
             event.preventDefault();
             event.stopPropagation();
+
 
             joystickPointerId =
                 event.pointerId;
@@ -1101,11 +1363,11 @@
                     event.pointerId
                 );
             } catch (error) {
-                // Optional on mobile Safari.
+                /* Safari fallback */
             }
 
 
-            setJoystickPosition(
+            updateJoystick(
                 event.clientX,
                 event.clientY
             );
@@ -1131,7 +1393,7 @@
             event.stopPropagation();
 
 
-            setJoystickPosition(
+            updateJoystick(
                 event.clientX,
                 event.clientY
             );
@@ -1168,23 +1430,38 @@
 
 
     /* =====================================================
-       LOOK INPUT
+       TOUCH / MOUSE LOOK
     ====================================================== */
 
-    let lookPointerId = null;
+    let lookPointerId =
+        null;
 
-    let lastLookX = 0;
-    let lastLookY = 0;
+    let lastLookX =
+        0;
 
-    let pendingLookX = 0;
-    let pendingLookY = 0;
+    let lastLookY =
+        0;
+
+    let pendingLookX =
+        0;
+
+    let pendingLookY =
+        0;
 
 
-    function isControl(target) {
+    function targetIsControl(
+        target
+    ) {
         return (
-            moveStick.contains(target) ||
-            fireButton.contains(target) ||
-            reloadButton.contains(target)
+            moveStick.contains(
+                target
+            ) ||
+            fireButton.contains(
+                target
+            ) ||
+            reloadButton.contains(
+                target
+            )
         );
     }
 
@@ -1193,7 +1470,7 @@
         "pointerdown",
         function (event) {
             if (
-                isControl(
+                targetIsControl(
                     event.target
                 )
             ) {
@@ -1202,7 +1479,8 @@
 
 
             if (
-                lookPointerId !== null
+                lookPointerId !==
+                null
             ) {
                 return;
             }
@@ -1226,7 +1504,7 @@
                     event.pointerId
                 );
             } catch (error) {
-                // Pointer capture is optional.
+                /* Safari fallback */
             }
         },
         {
@@ -1266,7 +1544,8 @@
 
 
             const sensitivity =
-                event.pointerType === "touch"
+                event.pointerType ===
+                "touch"
                     ? player.touchSensitivity
                     : player.mouseSensitivity;
 
@@ -1285,72 +1564,57 @@
     );
 
 
-    function endLook(
+    function stopLook(
         event
     ) {
         if (
             event.pointerId ===
             lookPointerId
         ) {
-            lookPointerId = null;
+            lookPointerId =
+                null;
         }
     }
 
 
     gameContainer.addEventListener(
         "pointerup",
-        endLook
+        stopLook
     );
 
 
     gameContainer.addEventListener(
         "pointercancel",
-        endLook
+        stopLook
     );
 
 
     function updateLook() {
-        if (
-            Math.abs(
-                pendingLookX
-            ) < 0.00001 &&
-            Math.abs(
-                pendingLookY
-            ) < 0.00001
-        ) {
-            return;
-        }
+        const smoothing =
+            0.58;
 
 
-        /*
-            Apply only part of the pending motion each frame.
-            This makes touch camera movement less jittery.
-        */
-
-        const smoothing = 0.55;
-
-
-        const appliedX =
+        const applyX =
             pendingLookX *
             smoothing;
 
-        const appliedY =
+        const applyY =
             pendingLookY *
             smoothing;
 
 
         player.yaw -=
-            appliedX;
+            applyX;
 
         player.pitch -=
-            appliedY;
+            applyY;
 
 
         pendingLookX -=
-            appliedX;
+            applyX;
 
         pendingLookY -=
-            appliedY;
+            applyY;
 
 
         updateCameraRotation();
@@ -1358,55 +1622,81 @@
 
 
     /* =====================================================
-       DESKTOP KEYBOARD
+       KEYBOARD
     ====================================================== */
 
     const keys = {
-        w: false,
-        s: false,
-        a: false,
-        d: false
+        forward: false,
+        backward: false,
+        left: false,
+        right: false
     };
 
 
-    function updateKeyboardInput() {
+    function updateKeyboard() {
         player.keyboardForward =
-            (keys.w ? 1 : 0) -
-            (keys.s ? 1 : 0);
+            (
+                keys.forward
+                    ? 1
+                    : 0
+            ) -
+            (
+                keys.backward
+                    ? 1
+                    : 0
+            );
 
 
         player.keyboardRight =
-            (keys.d ? 1 : 0) -
-            (keys.a ? 1 : 0);
+            (
+                keys.right
+                    ? 1
+                    : 0
+            ) -
+            (
+                keys.left
+                    ? 1
+                    : 0
+            );
     }
 
 
     window.addEventListener(
         "keydown",
         function (event) {
-            switch (event.code) {
-                case "KeyW":
-                case "ArrowUp":
-                    keys.w = true;
-                    break;
-
-                case "KeyS":
-                case "ArrowDown":
-                    keys.s = true;
-                    break;
-
-                case "KeyA":
-                case "ArrowLeft":
-                    keys.a = true;
-                    break;
-
-                case "KeyD":
-                case "ArrowRight":
-                    keys.d = true;
-                    break;
+            if (
+                event.code === "KeyW" ||
+                event.code === "ArrowUp"
+            ) {
+                keys.forward = true;
             }
 
-            updateKeyboardInput();
+
+            if (
+                event.code === "KeyS" ||
+                event.code === "ArrowDown"
+            ) {
+                keys.backward = true;
+            }
+
+
+            if (
+                event.code === "KeyA" ||
+                event.code === "ArrowLeft"
+            ) {
+                keys.left = true;
+            }
+
+
+            if (
+                event.code === "KeyD" ||
+                event.code === "ArrowRight"
+            ) {
+                keys.right = true;
+            }
+
+
+            updateKeyboard();
         }
     );
 
@@ -1414,59 +1704,69 @@
     window.addEventListener(
         "keyup",
         function (event) {
-            switch (event.code) {
-                case "KeyW":
-                case "ArrowUp":
-                    keys.w = false;
-                    break;
-
-                case "KeyS":
-                case "ArrowDown":
-                    keys.s = false;
-                    break;
-
-                case "KeyA":
-                case "ArrowLeft":
-                    keys.a = false;
-                    break;
-
-                case "KeyD":
-                case "ArrowRight":
-                    keys.d = false;
-                    break;
+            if (
+                event.code === "KeyW" ||
+                event.code === "ArrowUp"
+            ) {
+                keys.forward = false;
             }
 
-            updateKeyboardInput();
+
+            if (
+                event.code === "KeyS" ||
+                event.code === "ArrowDown"
+            ) {
+                keys.backward = false;
+            }
+
+
+            if (
+                event.code === "KeyA" ||
+                event.code === "ArrowLeft"
+            ) {
+                keys.left = false;
+            }
+
+
+            if (
+                event.code === "KeyD" ||
+                event.code === "ArrowRight"
+            ) {
+                keys.right = false;
+            }
+
+
+            updateKeyboard();
         }
     );
 
 
     /* =====================================================
-       TEMPORARY FIRE / RELOAD TEST
+       FIRE / RELOAD INPUT TEST
     ====================================================== */
 
-    let magAmmo = 8;
-    let reserveAmmo = 32;
+    let magAmmo =
+        8;
+
+    let reserveAmmo =
+        32;
 
 
     function updateAmmoHUD() {
         magAmmoElement.textContent =
-            String(magAmmo);
+            String(
+                magAmmo
+            );
+
 
         reserveAmmoElement.textContent =
-            String(reserveAmmo);
+            String(
+                reserveAmmo
+            );
     }
 
 
-    function flashCrosshair() {
-        const crosshair =
-            document.getElementById(
-                "crosshair"
-            );
-
-        if (!crosshair) return;
-
-
+    function pulseCrosshair() {
         crosshair.style.transform =
             "translate(-50%, -50%) scale(1.45)";
 
@@ -1476,7 +1776,7 @@
                 crosshair.style.transform =
                     "translate(-50%, -50%) scale(1)";
             },
-            80
+            70
         );
     }
 
@@ -1495,10 +1795,13 @@
             }
 
 
-            magAmmo -= 1;
+            magAmmo -=
+                1;
+
 
             updateAmmoHUD();
-            flashCrosshair();
+
+            pulseCrosshair();
         },
         {
             passive: false
@@ -1557,14 +1860,26 @@
 
     /* =====================================================
        RESIZE
+
+       visualViewport is important on iOS Safari because the visible
+       viewport can differ from the CSS/layout viewport.
     ====================================================== */
 
     function resizeGame() {
+        const viewport =
+            window.visualViewport;
+
+
         const width =
-            window.innerWidth;
+            viewport
+                ? viewport.width
+                : window.innerWidth;
+
 
         const height =
-            window.innerHeight;
+            viewport
+                ? viewport.height
+                : window.innerHeight;
 
 
         if (
@@ -1576,14 +1891,17 @@
 
 
         camera.aspect =
-            width / height;
+            width /
+            height;
+
 
         camera.updateProjectionMatrix();
 
 
         renderer.setPixelRatio(
             Math.min(
-                window.devicePixelRatio || 1,
+                window.devicePixelRatio ||
+                    1,
                 2
             )
         );
@@ -1603,12 +1921,22 @@
     );
 
 
+    if (
+        window.visualViewport
+    ) {
+        window.visualViewport.addEventListener(
+            "resize",
+            resizeGame
+        );
+    }
+
+
     window.addEventListener(
         "orientationchange",
         function () {
             setTimeout(
                 resizeGame,
-                150
+                180
             );
         }
     );
@@ -1631,13 +1959,13 @@
         const deltaTime =
             Math.min(
                 clock.getDelta(),
-                0.05
+                0.04
             );
 
 
         updateLook();
 
-        updatePlayer(
+        updateMovement(
             deltaTime
         );
 
@@ -1655,13 +1983,15 @@
 
     updateCameraRotation();
 
+    resolvePenetration();
+
     resizeGame();
 
     animate();
 
 
     console.log(
-        "Zombies Build 2.1 loaded: hardened movement collision."
+        "Zombies Build 2.2 loaded."
     );
 
 })();
