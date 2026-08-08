@@ -1,0 +1,320 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: Arial, Helvetica, sans-serif;
+    touch-action: none;
+}
+
+#game-container {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #111;
+}
+
+#game {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* =========================
+   HUD
+========================= */
+
+#hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    color: white;
+}
+
+#round {
+    position: absolute;
+    left: 25px;
+    top: 20px;
+
+    font-size: 24px;
+    font-weight: bold;
+
+    text-shadow:
+        2px 2px 3px black,
+        -1px -1px 2px black;
+}
+
+#points {
+    position: absolute;
+    left: 25px;
+    top: 55px;
+
+    font-size: 30px;
+    font-weight: bold;
+
+    text-shadow:
+        2px 2px 3px black,
+        -1px -1px 2px black;
+}
+
+#ammo {
+    position: absolute;
+    right: 30px;
+    bottom: 25px;
+
+    font-size: 30px;
+    font-weight: bold;
+
+    text-shadow:
+        2px 2px 3px black,
+        -1px -1px 2px black;
+}
+
+/* =========================
+   CROSSHAIR
+========================= */
+
+#crosshair {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    color: white;
+    font-size: 30px;
+
+    pointer-events: none;
+
+    text-shadow: 1px 1px 3px black;
+}
+
+/* =========================
+   LEFT MOVEMENT CONTROL
+========================= */
+
+#left-controls {
+    position: absolute;
+
+    left: 20px;
+    bottom: 20px;
+
+    width: 150px;
+    height: 150px;
+}
+
+#move-stick {
+    position: absolute;
+
+    left: 0;
+    bottom: 0;
+
+    width: 130px;
+    height: 130px;
+
+    border-radius: 50%;
+
+    border: 3px solid rgba(255, 255, 255, 0.35);
+
+    background: rgba(0, 0, 0, 0.25);
+}
+
+#move-knob {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 58px;
+    height: 58px;
+
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.45);
+
+    border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+/* =========================
+   RIGHT CONTROLS
+========================= */
+
+#right-controls {
+    position: absolute;
+
+    right: 20px;
+    bottom: 75px;
+
+    width: 180px;
+    height: 150px;
+
+    pointer-events: none;
+}
+
+#fire-button,
+#reload-button {
+    position: absolute;
+
+    color: white;
+
+    border: 2px solid rgba(255, 255, 255, 0.55);
+
+    background: rgba(0, 0, 0, 0.45);
+
+    font-weight: bold;
+
+    pointer-events: auto;
+
+    touch-action: none;
+}
+
+#fire-button {
+    right: 0;
+    bottom: 0;
+
+    width: 85px;
+    height: 85px;
+
+    border-radius: 50%;
+
+    font-size: 17px;
+}
+
+#reload-button {
+    right: 90px;
+    bottom: 10px;
+
+    width: 75px;
+    height: 48px;
+
+    border-radius: 12px;
+
+    font-size: 12px;
+}
+
+#fire-button:active,
+#reload-button:active {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+/* =========================
+   PORTRAIT WARNING
+========================= */
+
+#rotate-screen {
+    display: none;
+
+    position: fixed;
+    inset: 0;
+
+    z-index: 9999;
+
+    background: #050505;
+    color: white;
+
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    text-align: center;
+
+    padding: 30px;
+}
+
+#rotate-screen h1 {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+#rotate-screen p {
+    font-size: 18px;
+    opacity: 0.75;
+}
+
+/* Show warning when phone is upright */
+
+@media (orientation: portrait) {
+
+    #rotate-screen {
+        display: flex;
+    }
+
+    #game-container {
+        display: none;
+    }
+}
+
+/* =========================
+   SMALL LANDSCAPE PHONES
+========================= */
+
+@media (orientation: landscape) and (max-height: 450px) {
+
+    #round {
+        top: 12px;
+        left: 18px;
+        font-size: 18px;
+    }
+
+    #points {
+        top: 38px;
+        left: 18px;
+        font-size: 24px;
+    }
+
+    #left-controls {
+        left: 15px;
+        bottom: 15px;
+
+        width: 120px;
+        height: 120px;
+    }
+
+    #move-stick {
+        width: 105px;
+        height: 105px;
+    }
+
+    #move-knob {
+        width: 48px;
+        height: 48px;
+    }
+
+    #right-controls {
+        right: 15px;
+        bottom: 60px;
+    }
+
+    #fire-button {
+        width: 72px;
+        height: 72px;
+
+        font-size: 14px;
+    }
+
+    #reload-button {
+        width: 65px;
+        height: 42px;
+    }
+
+    #ammo {
+        right: 20px;
+        bottom: 15px;
+        font-size: 24px;
+    }
+}
