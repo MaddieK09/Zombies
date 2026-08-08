@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.3
-   COMPACT PISTOL MODEL + FRAMING FIX
+   BUILD 3.4
+   REAL GLB PISTOL MODEL
 ========================================================= */
 
 (function () {
@@ -75,6 +75,15 @@
     if (typeof THREE === "undefined") {
         showError(
             "THREE.JS FAILED TO LOAD."
+        );
+
+        return;
+    }
+
+
+    if (typeof THREE.GLTFLoader === "undefined") {
+        showError(
+            "GLTFLOADER FAILED TO LOAD."
         );
 
         return;
@@ -664,16 +673,16 @@
 
         basePosition:
             new THREE.Vector3(
-                0.15,
-                -0.31,
-                -1.28
+                0.28,
+                -0.29,
+                -1.05
             ),
 
         baseRotation:
             new THREE.Euler(
-                -0.035,
-                -0.035,
-                0.012
+                -0.02,
+                -0.08,
+                0.015
             ),
 
         recoil:
@@ -725,519 +734,366 @@
     */
 
     weapon.group.scale.set(
-        0.82,
-        0.82,
-        0.82
+        1,
+        1,
+        1
     );
 
 
-    function makeWeaponMaterial(
-        color,
-        roughness,
-        metalness
+    /* =====================================================
+       REAL PISTOL MODEL
+    ====================================================== */
+
+    /*
+       Put your model here in the repository:
+
+       assets/pistol.glb
+
+       The loader below automatically:
+       - loads the GLB
+       - centers it
+       - detects its longest axis
+       - rotates that axis toward the camera's forward direction
+       - scales it to a useful first-person size
+
+       Fine positioning can then be adjusted with the constants below.
+    */
+
+
+    const PISTOL_MODEL_PATH =
+        "assets/pistol.glb";
+
+
+    const MODEL_TARGET_LENGTH =
+        0.62;
+
+
+    /*
+       Fine-tuning values.
+
+       If the specific GLB comes in facing backwards/upside-down,
+       these are the ONLY values we should need to tweak later.
+    */
+
+    const MODEL_ROTATION_FIX =
+        new THREE.Euler(
+            0,
+            0,
+            0
+        );
+
+
+    const MODEL_POSITION_FIX =
+        new THREE.Vector3(
+            0,
+            0,
+            0
+        );
+
+
+    const weaponModelHolder =
+        new THREE.Group();
+
+
+    weapon.group.add(
+        weaponModelHolder
+    );
+
+
+    let pistolModel =
+        null;
+
+
+    function preparePistolModel(
+        model
     ) {
         /*
-           MeshBasicMaterial intentionally ignores world lighting.
-           The gun therefore stays readable even in dark rooms and
-           behaves consistently on mobile Safari.
+           Remove cameras/lights that may have been exported
+           inside the asset.
         */
 
-        return new THREE.MeshBasicMaterial({
-            color: color,
-            depthTest: false,
-            depthWrite: false
-        });
-    }
+        model.traverse(
+            function (child) {
+                if (
+                    child.isCamera ||
+                    child.isLight
+                ) {
+                    child.visible =
+                        false;
+                }
 
 
-    const gunMetalMaterial =
-        makeWeaponMaterial(
-            0x24272b,
-            0.45,
-            0.55
+                if (
+                    child.isMesh
+                ) {
+                    child.frustumCulled =
+                        false;
+
+
+                    child.castShadow =
+                        false;
+
+
+                    child.receiveShadow =
+                        false;
+
+
+                    /*
+                       The weapon gets its own render pass, so it
+                       doesn't need to interact with world depth.
+                    */
+
+                    if (
+                        child.material
+                    ) {
+                        const materials =
+                            Array.isArray(
+                                child.material
+                            )
+                                ? child.material
+                                : [
+                                    child.material
+                                ];
+
+
+                        materials.forEach(
+                            function (material) {
+                                material.depthTest =
+                                    false;
+
+                                material.depthWrite =
+                                    false;
+
+                                material.transparent =
+                                    material.transparent ||
+                                    false;
+
+                                material.needsUpdate =
+                                    true;
+                            }
+                        );
+                    }
+
+
+                    child.renderOrder =
+                        1000;
+                }
+            }
         );
 
 
-    const gunDarkMaterial =
-        makeWeaponMaterial(
-            0x101214,
-            0.6,
-            0.35
+        /*
+           Calculate original bounds.
+        */
+
+        model.updateMatrixWorld(
+            true
         );
 
 
-    const gripMaterial =
-        makeWeaponMaterial(
-            0x17191b,
-            0.78,
-            0.08
-        );
-
-
-    const skinMaterial =
-        makeWeaponMaterial(
-            0xd0a17d,
-            0.92,
-            0
-        );
-
-
-    const sleeveMaterial =
-        makeWeaponMaterial(
-            0x2d3034,
-            0.9,
-            0
-        );
-
-
-    function createWeaponBox(
-        width,
-        height,
-        depth,
-        x,
-        y,
-        z,
-        material,
-        parent
-    ) {
-        const mesh =
-            new THREE.Mesh(
-                new THREE.BoxGeometry(
-                    width,
-                    height,
-                    depth
-                ),
-                material
+        let box =
+            new THREE.Box3().setFromObject(
+                model
             );
 
 
-        mesh.position.set(
-            x,
-            y,
-            z
+        let size =
+            new THREE.Vector3();
+
+
+        box.getSize(
+            size
         );
 
 
-        mesh.renderOrder =
-            1000;
+        /*
+           Orient the model's longest dimension along local Z,
+           because first-person guns point forward/back along Z.
+        */
+
+        if (
+            size.x >= size.y &&
+            size.x >= size.z
+        ) {
+            model.rotation.y =
+                Math.PI / 2;
+        } else if (
+            size.y >= size.x &&
+            size.y >= size.z
+        ) {
+            model.rotation.x =
+                Math.PI / 2;
+        }
 
 
-        parent.add(
-            mesh
+        model.updateMatrixWorld(
+            true
         );
 
 
-        return mesh;
-    }
+        /*
+           Recalculate after automatic orientation.
+        */
+
+        box =
+            new THREE.Box3().setFromObject(
+                model
+            );
 
 
-    /*
-       =====================================================
-       COMPACT PISTOL MODEL
-       =====================================================
-
-       Intentionally simple and low-poly, but proportioned more
-       like an actual compact semi-auto pistol rather than a block.
-    */
+        size =
+            new THREE.Vector3();
 
 
-    /*
-       Slide body.
-    */
-
-    const pistolSlide =
-        createWeaponBox(
-            0.155,
-            0.085,
-            0.42,
-            0,
-            0.045,
-            -0.10,
-            gunMetalMaterial,
-            weapon.group
+        box.getSize(
+            size
         );
 
 
-    /*
-       Slightly narrower top ridge.
-    */
-
-    createWeaponBox(
-        0.120,
-        0.020,
-        0.34,
-        0,
-        0.102,
-        -0.10,
-        gunDarkMaterial,
-        weapon.group
-    );
+        const longest =
+            Math.max(
+                size.x,
+                size.y,
+                size.z
+            );
 
 
-    /*
-       Barrel.
-    */
-
-    const barrelMaterial =
-        new THREE.MeshBasicMaterial({
-            color: 0x0d0f10,
-            depthTest: false,
-            depthWrite: false
-        });
+        if (
+            longest > 0
+        ) {
+            const scale =
+                MODEL_TARGET_LENGTH /
+                longest;
 
 
-    const barrel =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.032,
-                0.032,
-                0.34,
-                12
-            ),
-            barrelMaterial
+            model.scale.setScalar(
+                scale
+            );
+        }
+
+
+        model.updateMatrixWorld(
+            true
         );
 
 
-    barrel.rotation.x =
-        Math.PI / 2;
+        /*
+           Center the actual geometry around the holder's origin.
+        */
+
+        box =
+            new THREE.Box3().setFromObject(
+                model
+            );
 
 
-    barrel.position.set(
-        0,
-        0.020,
-        -0.18
-    );
+        const center =
+            new THREE.Vector3();
 
 
-    barrel.renderOrder =
-        1002;
-
-
-    weapon.group.add(
-        barrel
-    );
-
-
-    /*
-       Receiver/frame.
-    */
-
-    createWeaponBox(
-        0.135,
-        0.070,
-        0.28,
-        0,
-        -0.040,
-        -0.005,
-        gunDarkMaterial,
-        weapon.group
-    );
-
-
-    /*
-       Trigger guard using a torus.
-    */
-
-    const triggerGuard =
-        new THREE.Mesh(
-            new THREE.TorusGeometry(
-                0.072,
-                0.010,
-                6,
-                12,
-                Math.PI
-            ),
-            gunDarkMaterial
+        box.getCenter(
+            center
         );
 
 
-    triggerGuard.rotation.set(
-        Math.PI / 2,
-        0,
-        0
-    );
-
-
-    triggerGuard.position.set(
-        0,
-        -0.125,
-        -0.070
-    );
-
-
-    triggerGuard.renderOrder =
-        1002;
-
-
-    weapon.group.add(
-        triggerGuard
-    );
-
-
-    /*
-       Trigger.
-    */
-
-    const trigger =
-        createWeaponBox(
-            0.018,
-            0.060,
-            0.025,
-            0,
-            -0.125,
-            -0.055,
-            gunMetalMaterial,
-            weapon.group
+        model.position.sub(
+            center
         );
 
 
-    trigger.rotation.x =
-        -0.30;
+        /*
+           Push the centered gun slightly so its rear sits
+           closer to the player and the muzzle points forward.
+        */
+
+        model.position.z +=
+            0.04;
 
 
-    /*
-       Grip.
-    */
-
-    const pistolGrip =
-        createWeaponBox(
-            0.115,
-            0.270,
-            0.120,
-            0,
-            -0.245,
-            0.055,
-            gripMaterial,
-            weapon.group
+        model.position.add(
+            MODEL_POSITION_FIX
         );
 
 
-    pistolGrip.rotation.x =
-        -0.26;
+        model.rotation.x +=
+            MODEL_ROTATION_FIX.x;
 
 
-    /*
-       Grip rear strap.
-    */
+        model.rotation.y +=
+            MODEL_ROTATION_FIX.y;
 
-    const rearStrap =
-        createWeaponBox(
-            0.118,
-            0.245,
-            0.035,
-            0,
-            -0.245,
-            0.125,
-            gunDarkMaterial,
-            weapon.group
+
+        model.rotation.z +=
+            MODEL_ROTATION_FIX.z;
+
+
+        model.updateMatrixWorld(
+            true
         );
 
 
-    rearStrap.rotation.x =
-        -0.26;
-
-
-    /*
-       Magazine base.
-    */
-
-    const magazineBase =
-        createWeaponBox(
-            0.130,
-            0.025,
-            0.135,
-            0,
-            -0.382,
-            0.095,
-            gunDarkMaterial,
-            weapon.group
+        weaponModelHolder.add(
+            model
         );
 
 
-    magazineBase.rotation.x =
-        -0.26;
+        pistolModel =
+            model;
 
 
-    /*
-       Front sight.
-    */
-
-    createWeaponBox(
-        0.020,
-        0.034,
-        0.028,
-        0,
-        0.128,
-        -0.290,
-        gunDarkMaterial,
-        weapon.group
-    );
-
-
-    /*
-       Rear sights.
-    */
-
-    createWeaponBox(
-        0.020,
-        0.032,
-        0.030,
-        -0.045,
-        0.126,
-        0.045,
-        gunDarkMaterial,
-        weapon.group
-    );
-
-
-    createWeaponBox(
-        0.020,
-        0.032,
-        0.030,
-        0.045,
-        0.126,
-        0.045,
-        gunDarkMaterial,
-        weapon.group
-    );
-
-
-    /*
-       Small slide serrations.
-    */
-
-    for (
-        let i = 0;
-        i < 4;
-        i += 1
-    ) {
-        createWeaponBox(
-            0.162,
-            0.008,
-            0.010,
-            0,
-            0.078,
-            0.020 +
-                i * 0.030,
-            gunDarkMaterial,
-            weapon.group
+        console.log(
+            "Real pistol GLB loaded successfully."
         );
     }
 
 
-    /*
-       Minimal right hand.
-    */
-
-    const rightHand =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.085,
-                8,
-                6
-            ),
-            skinMaterial
-        );
+    const gltfLoader =
+        new THREE.GLTFLoader();
 
 
-    rightHand.scale.set(
-        0.80,
-        1.05,
-        1.15
-    );
+    gltfLoader.load(
+        PISTOL_MODEL_PATH,
+
+        function (gltf) {
+            preparePistolModel(
+                gltf.scene
+            );
+        },
+
+        function (progress) {
+            /*
+               Optional loading progress.
+            */
+
+            if (
+                progress.total
+            ) {
+                const percent =
+                    Math.round(
+                        progress.loaded /
+                        progress.total *
+                        100
+                    );
 
 
-    rightHand.position.set(
-        0.045,
-        -0.275,
-        0.105
-    );
+                console.log(
+                    "Pistol model: " +
+                    percent +
+                    "%"
+                );
+            }
+        },
+
+        function (error) {
+            console.error(
+                error
+            );
 
 
-    rightHand.renderOrder =
-        1001;
-
-
-    weapon.group.add(
-        rightHand
-    );
-
-
-    /*
-       Minimal right sleeve.
-    */
-
-    const rightForearm =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.075,
-                0.095,
-                0.34,
-                8
-            ),
-            sleeveMaterial
-        );
-
-
-    rightForearm.rotation.x =
-        Math.PI / 2;
-
-
-    rightForearm.rotation.z =
-        -0.10;
-
-
-    rightForearm.position.set(
-        0.095,
-        -0.345,
-        0.30
-    );
-
-
-    rightForearm.renderOrder =
-        1000;
-
-
-    weapon.group.add(
-        rightForearm
-    );
-
-
-    /*
-       Supporting left hand only â no giant left forearm.
-    */
-
-    const leftHand =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.070,
-                8,
-                6
-            ),
-            skinMaterial
-        );
-
-
-    leftHand.scale.set(
-        1.15,
-        0.90,
-        1.05
-    );
-
-
-    leftHand.position.set(
-        -0.090,
-        -0.170,
-        -0.005
-    );
-
-
-    leftHand.renderOrder =
-        1001;
-
-
-    weapon.group.add(
-        leftHand
+            showError(
+                "PISTOL MODEL FAILED TO LOAD. Make sure assets/pistol.glb exists."
+            );
+        }
     );
 
 
@@ -1268,8 +1124,8 @@
 
     muzzleFlash.position.set(
         0,
-        0.020,
-        -0.355
+        0.02,
+        -0.36
     );
 
 
@@ -1284,7 +1140,7 @@
         1002;
 
 
-    weapon.group.add(
+    weaponModelHolder.add(
         muzzleFlash
     );
 
@@ -1299,12 +1155,12 @@
 
     muzzleLight.position.set(
         0,
-        0.020,
-        -0.355
+        0.02,
+        -0.36
     );
 
 
-    weapon.group.add(
+    weaponModelHolder.add(
         muzzleLight
     );
 
@@ -3400,7 +3256,7 @@
 
 
     console.log(
-        "Zombies Build 3.3 loaded: compact pistol + framing fix."
+        "Zombies Build 3.4 loaded: real GLB pistol model loader."
     );
 
 })();
