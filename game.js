@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.13
-   CUSTOM NORMAL-SHADED PISTOL
+   BUILD 3.14
+   RECOIL STABILITY PASS
 ========================================================= */
 
 (function () {
@@ -1548,14 +1548,14 @@
 
     function addWeaponRecoil() {
         weapon.recoilVelocity +=
-            0.065;
+            0.028;
 
 
         weapon.recoil =
             Math.min(
                 weapon.recoil +
-                    0.012,
-                0.085
+                    0.006,
+                0.030
             );
 
 
@@ -1564,9 +1564,9 @@
         */
 
         player.pitch +=
-            0.006 +
+            0.0028 +
             Math.random() *
-            0.002;
+            0.0012;
 
 
         player.yaw +=
@@ -1574,7 +1574,7 @@
                 Math.random() -
                 0.5
             ) *
-            0.0025;
+            0.0012;
 
 
         updateCameraRotation();
@@ -1593,15 +1593,23 @@
         weapon.recoilVelocity +=
             (
                 -weapon.recoil *
-                28
+                52
             ) *
             deltaTime;
 
 
         weapon.recoilVelocity *=
             Math.pow(
-                0.0008,
+                0.00008,
                 deltaTime
+            );
+
+
+        weapon.recoilVelocity =
+            THREE.MathUtils.clamp(
+                weapon.recoilVelocity,
+                -0.12,
+                0.12
             );
 
 
@@ -1611,9 +1619,10 @@
 
 
         weapon.recoil =
-            Math.max(
+            THREE.MathUtils.clamp(
+                weapon.recoil,
                 0,
-                weapon.recoil
+                0.035
             );
 
 
@@ -1805,7 +1814,7 @@
         weapon.group.rotation.set(
             weapon.baseRotation.x +
                 weapon.recoil *
-                0.65 +
+                0.28 +
                 reloadPitch,
 
             weapon.baseRotation.y +
@@ -3456,11 +3465,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.13";
+        "3.14";
 
 
     console.log(
-        "ZOMBIES BUILD 3.13 ACTIVE"
+        "ZOMBIES BUILD 3.14 ACTIVE"
     );
 
 
