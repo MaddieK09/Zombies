@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.15
-   REALISTIC PISTOL RECOIL PASS
+   BUILD 3.16
+   SNAP RECOIL AROUND GRIP
 ========================================================= */
 
 (function () {
@@ -1548,14 +1548,14 @@
 
     function addWeaponRecoil() {
         weapon.recoilVelocity +=
-            0.055;
+            0.050;
 
 
         weapon.recoil =
             Math.min(
                 weapon.recoil +
-                    0.011,
-                0.048
+                    0.009,
+                0.042
             );
 
 
@@ -1564,9 +1564,9 @@
         */
 
         player.pitch +=
-            0.0065 +
+            0.0022 +
             Math.random() *
-            0.0020;
+            0.0009;
 
 
         player.yaw +=
@@ -1574,7 +1574,7 @@
                 Math.random() -
                 0.5
             ) *
-            0.0022;
+            0.0007;
 
 
         updateCameraRotation();
@@ -1593,14 +1593,14 @@
         weapon.recoilVelocity +=
             (
                 -weapon.recoil *
-                42
+                46
             ) *
             deltaTime;
 
 
         weapon.recoilVelocity *=
             Math.pow(
-                0.00028,
+                0.00020,
                 deltaTime
             );
 
@@ -1608,8 +1608,8 @@
         weapon.recoilVelocity =
             THREE.MathUtils.clamp(
                 weapon.recoilVelocity,
-                -0.18,
-                0.18
+                -0.16,
+                0.16
             );
 
 
@@ -1622,7 +1622,7 @@
             THREE.MathUtils.clamp(
                 weapon.recoil,
                 0,
-                0.050
+                0.043
             );
 
 
@@ -1795,50 +1795,52 @@
         }
 
 
-        const recoilSideKick =
-            Math.sin(
-                weapon.recoil *
-                70
-            ) *
-            0.004;
-
+        /*
+           Build 3.16 recoil:
+           Keep translation small. The visual punch should come mostly
+           from rotation around the grip rather than the whole weapon
+           sliding across the screen.
+        */
 
         weapon.group.position.set(
             weapon.basePosition.x +
                 bobX +
                 weapon.swayX +
-                reloadOffsetX +
-                recoilSideKick,
+                reloadOffsetX,
 
             weapon.basePosition.y -
                 bobY +
                 weapon.swayY +
                 reloadOffsetY +
                 weapon.recoil *
-                0.10,
+                0.035,
 
             weapon.basePosition.z +
                 weapon.recoil *
-                1.35
+                0.42
         );
 
+
+        /*
+           Pivot-style recoil:
+           sharply rotate the muzzle upward while keeping lateral
+           movement and roll minimal.
+        */
 
         weapon.group.rotation.set(
             weapon.baseRotation.x +
                 weapon.recoil *
-                0.72 +
+                1.85 +
                 reloadPitch,
 
             weapon.baseRotation.y +
                 weapon.swayX *
-                0.8,
+                0.55,
 
             weapon.baseRotation.z +
                 bobX *
-                -0.7 +
-                reloadRoll +
-                weapon.recoil *
-                -0.18
+                -0.35 +
+                reloadRoll
         );
 
 
@@ -3479,11 +3481,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.15";
+        "3.16";
 
 
     console.log(
-        "ZOMBIES BUILD 3.15 ACTIVE"
+        "ZOMBIES BUILD 3.16 ACTIVE"
     );
 
 
