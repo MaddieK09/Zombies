@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.12
-   SHADED PISTOL + MUZZLE FLASH REMOVED
+   BUILD 3.13
+   CUSTOM NORMAL-SHADED PISTOL
 ========================================================= */
 
 (function () {
@@ -946,7 +946,7 @@
 
 
                     let gunColor =
-                        0x3a4148;
+                        0x343a42;
 
 
                     /*
@@ -974,16 +974,73 @@
                     }
 
 
+                    /*
+                       Build 3.13:
+                       Do NOT depend on Three.js scene lighting for the gun.
+
+                       This shader uses the pistol's own normals to create
+                       stable dark/light face separation in camera space.
+                       That makes the low-poly geometry readable even if
+                       Safari/WebGL handles imported materials strangely.
+                    */
+
                     child.material =
-                        new THREE.MeshLambertMaterial({
-                            color:
-                                gunColor,
+                        new THREE.ShaderMaterial({
+                            uniforms: {
+                                baseColor: {
+                                    value:
+                                        new THREE.Color(
+                                            gunColor
+                                        )
+                                }
+                            },
 
-                            emissive:
-                                0x080a0c,
+                            vertexShader: [
+                                "varying vec3 vNormalView;",
+                                "varying vec3 vViewPosition;",
 
-                            emissiveIntensity:
-                                0.18,
+                                "void main() {",
+                                "    vNormalView = normalize(normalMatrix * normal);",
+                                "",
+                                "    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);",
+                                "    vViewPosition = mvPosition.xyz;",
+                                "",
+                                "    gl_Position = projectionMatrix * mvPosition;",
+                                "}"
+                            ].join("\n"),
+
+                            fragmentShader: [
+                                "uniform vec3 baseColor;",
+                                "",
+                                "varying vec3 vNormalView;",
+                                "varying vec3 vViewPosition;",
+                                "",
+                                "void main() {",
+                                "    vec3 n = normalize(vNormalView);",
+                                "",
+                                "    if (!gl_FrontFacing) {",
+                                "        n = -n;",
+                                "    }",
+                                "",
+                                "    vec3 keyLight = normalize(vec3(-0.55, 0.85, 0.75));",
+                                "    vec3 fillLight = normalize(vec3(0.75, 0.20, 0.50));",
+                                "",
+                                "    float key = max(dot(n, keyLight), 0.0);",
+                                "    float fill = max(dot(n, fillLight), 0.0);",
+                                "",
+                                "    vec3 viewDir = normalize(-vViewPosition);",
+                                "    float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 2.4);",
+                                "",
+                                "    float shade = 0.30 + key * 0.58 + fill * 0.18;",
+                                "",
+                                "    vec3 color = baseColor * shade;",
+                                "    color += vec3(0.12, 0.14, 0.17) * rim * 0.28;",
+                                "",
+                                "    color = clamp(color, 0.0, 1.0);",
+                                "",
+                                "    gl_FragColor = vec4(color, 1.0);",
+                                "}"
+                            ].join("\n"),
 
                             side:
                                 THREE.DoubleSide,
@@ -994,20 +1051,11 @@
                             depthWrite:
                                 false,
 
-                            vertexColors:
-                                false,
-
-                            fog:
-                                false,
-
                             transparent:
                                 false,
 
-                            opacity:
-                                1,
-
-                            colorWrite:
-                                true
+                            fog:
+                                false
                         });
 
 
@@ -3408,11 +3456,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.12";
+        "3.13";
 
 
     console.log(
-        "ZOMBIES BUILD 3.12 ACTIVE"
+        "ZOMBIES BUILD 3.13 ACTIVE"
     );
 
 
