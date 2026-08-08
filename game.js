@@ -1091,8 +1091,14 @@
 
 
             showError(
-                "PISTOL MODEL FAILED TO LOAD. Make sure pistol.glb exists."
-            );
+    "PISTOL MODEL FAILED: " +
+    (
+        error &&
+        error.message
+            ? error.message
+            : String(error)
+    )
+);
         }
     );
 
