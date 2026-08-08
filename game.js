@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.21
-   STRONGER PULSE + PEAK HOLD
+   BUILD 3.22
+   SHARP KICK + CLEAN RECOVERY
 ========================================================= */
 
 (function () {
@@ -754,7 +754,7 @@
             0,
 
         recoilPulseDuration:
-            0.135,
+            0.118,
 
         recoilPulseStrength:
             0,
@@ -1614,14 +1614,11 @@
         /*
            Build 3.20 time-based recoil pulse.
 
-           0% -> 20% of the pulse:
-           very fast ease-out snap to peak.
+           0% -> 16% of the pulse:
+           very sharp ease-out snap to peak.
 
-           20% -> 34%:
-           brief readable peak hold.
-
-           34% -> 100%:
-           controlled smooth return to rest.
+           16% -> 100%:
+           quick, smooth return to rest.
 
            Every new shot restarts this pulse.
         */
@@ -1648,15 +1645,15 @@
 
             if (
                 recoilT <
-                0.20
+                0.16
             ) {
                 /*
-                   Very fast ease-out snap to peak.
+                   Very sharp ease-out snap to peak.
                 */
 
                 const kickT =
                     recoilT /
-                    0.20;
+                    0.16;
 
 
                 recoilPulse =
@@ -1664,30 +1661,19 @@
                     Math.pow(
                         1 -
                         kickT,
-                        3
+                        4
                     );
-            } else if (
-                recoilT <
-                0.34
-            ) {
-                /*
-                   Brief peak hold so the muzzle rise is readable
-                   even on lower-frame-rate mobile displays.
-                */
-
-                recoilPulse =
-                    1;
             } else {
                 /*
-                   Controlled return to rest.
+                   Quick but smoother recovery.
                 */
 
                 const recoverT =
                     (
                         recoilT -
-                        0.34
+                        0.16
                     ) /
-                    0.66;
+                    0.84;
 
 
                 recoilPulse =
@@ -1915,11 +1901,11 @@
                 weapon.swayY +
                 reloadOffsetY +
                 displayRecoil *
-                0.010,
+                0.008,
 
             weapon.basePosition.z +
                 displayRecoil *
-                0.036
+                0.030
         );
 
 
@@ -1932,21 +1918,19 @@
         weapon.group.rotation.set(
             weapon.baseRotation.x +
                 displayRecoil *
-                0.205 +
+                0.225 +
                 reloadPitch,
 
             weapon.baseRotation.y +
                 weapon.swayX *
-                0.55 +
-                displayRecoil *
-                0.006,
+                0.55,
 
             weapon.baseRotation.z +
                 bobX *
                 -0.35 +
                 reloadRoll -
                 displayRecoil *
-                0.008
+                0.004
         );
 
 
@@ -3587,11 +3571,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.21";
+        "3.22";
 
 
     console.log(
-        "ZOMBIES BUILD 3.21 ACTIVE"
+        "ZOMBIES BUILD 3.22 ACTIVE"
     );
 
 
