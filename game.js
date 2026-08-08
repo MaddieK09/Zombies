@@ -747,7 +747,7 @@
     /*
        Put your model here in the repository:
 
-       assets/pistol.glb
+       pistol.glb
 
        The loader below automatically:
        - loads the GLB
@@ -761,7 +761,7 @@
 
 
     const PISTOL_MODEL_PATH =
-        "Pistol by Quaternius - J3i9KDQ3kt.glb";
+        "pistol.glb";
 
 
     const MODEL_TARGET_LENGTH =
@@ -1091,7 +1091,7 @@
 
 
             showError(
-                "PISTOL MODEL FAILED TO LOAD. Make sure assets/pistol.glb exists."
+                "PISTOL MODEL FAILED TO LOAD. Make sure pistol.glb exists."
             );
         }
     );
@@ -3256,7 +3256,7 @@
 
 
     console.log(
-        "Zombies Build 3.4a loaded: root-level real GLB pistol model."
+        "Zombies Build 3.4b loaded: root-level real GLB pistol model."
     );
 
 })();
