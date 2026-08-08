@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     >
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>Zombies</title>
 
@@ -15,42 +20,133 @@
 
 <body>
 
+    <!-- =====================================================
+         PORTRAIT / ROTATION WARNING
+    ====================================================== -->
+
     <div id="rotate-screen">
         <h1>ROTATE DEVICE</h1>
         <p>This game is designed for landscape mode.</p>
     </div>
 
+
+    <!-- =====================================================
+         MAIN GAME
+    ====================================================== -->
+
     <div id="game-container">
 
+        <!-- 3D GAME CANVAS -->
         <canvas id="game"></canvas>
 
+
+        <!-- =================================================
+             HUD
+        ================================================== -->
+
         <div id="hud">
-            <div id="round">ROUND 1</div>
-            <div id="points">500</div>
+
+            <div id="round">
+                ROUND <span id="round-number">1</span>
+            </div>
+
+            <div id="points">
+                <span id="points-value">500</span>
+            </div>
 
             <div id="ammo">
+
                 <span id="mag-ammo">8</span>
-                <span>/</span>
+
+                <span id="ammo-divider">/</span>
+
                 <span id="reserve-ammo">32</span>
+
             </div>
+
         </div>
 
-        <div id="crosshair">+</div>
+
+        <!-- =================================================
+             CROSSHAIR
+        ================================================== -->
+
+        <div id="crosshair">
+            +
+        </div>
+
+
+        <!-- =================================================
+             LEFT MOVEMENT CONTROLS
+        ================================================== -->
 
         <div id="left-controls">
+
             <div id="move-stick">
+
                 <div id="move-knob"></div>
+
             </div>
+
         </div>
 
+
+        <!-- =================================================
+             RIGHT ACTION CONTROLS
+        ================================================== -->
+
         <div id="right-controls">
-            <button id="fire-button">FIRE</button>
-            <button id="reload-button">RELOAD</button>
+
+            <button
+                id="reload-button"
+                type="button"
+                aria-label="Reload weapon"
+            >
+                RELOAD
+            </button>
+
+            <button
+                id="fire-button"
+                type="button"
+                aria-label="Fire weapon"
+            >
+                FIRE
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             INTERACTION MESSAGE
+             Hidden until JavaScript needs it later
+        ================================================== -->
+
+        <div id="interaction-prompt" hidden>
+            INTERACT
         </div>
 
     </div>
 
+
+    <!-- =====================================================
+         THREE.JS
+
+         This gives game.js access to the THREE object.
+         We are loading it now so the HTML is already prepared
+         before we begin building the actual 3D game.
+    ====================================================== -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"
+    ></script>
+
+
+    <!-- =====================================================
+         GAME CODE
+    ====================================================== -->
+
     <script src="game.js"></script>
 
 </body>
+
 </html>
