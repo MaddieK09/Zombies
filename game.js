@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.18
-   FAST KICK + SLOWER RECOVERY RECOIL
+   BUILD 3.19
+   PEAK-SNAP RECOIL + DECISIVE RETURN
 ========================================================= */
 
 (function () {
@@ -1548,14 +1548,14 @@
 
     function addWeaponRecoil() {
         weapon.recoilVelocity +=
-            0.072;
+            0.090;
 
 
         weapon.recoil =
             Math.min(
                 weapon.recoil +
-                    0.013,
-                0.047
+                    0.016,
+                0.049
             );
 
 
@@ -1564,9 +1564,9 @@
         */
 
         player.pitch +=
-            0.0023 +
+            0.0024 +
             Math.random() *
-            0.0008;
+            0.0007;
 
 
         player.yaw +=
@@ -1574,7 +1574,7 @@
                 Math.random() -
                 0.5
             ) *
-            0.0006;
+            0.0005;
 
 
         updateCameraRotation();
@@ -1593,14 +1593,14 @@
         weapon.recoilVelocity +=
             (
                 -weapon.recoil *
-                34
+                44
             ) *
             deltaTime;
 
 
         weapon.recoilVelocity *=
             Math.pow(
-                0.00042,
+                0.00018,
                 deltaTime
             );
 
@@ -1608,8 +1608,8 @@
         weapon.recoilVelocity =
             THREE.MathUtils.clamp(
                 weapon.recoilVelocity,
-                -0.22,
-                0.22
+                -0.26,
+                0.26
             );
 
 
@@ -1622,7 +1622,7 @@
             THREE.MathUtils.clamp(
                 weapon.recoil,
                 0,
-                0.047
+                0.050
             );
 
 
@@ -1802,6 +1802,24 @@
            sliding across the screen.
         */
 
+        /*
+           Peak emphasis:
+           exaggerate the top of the recoil curve slightly so each shot
+           visibly "lands" at its peak before returning.
+        */
+
+        const displayRecoil =
+            weapon.recoil *
+            (
+                1 +
+                Math.min(
+                    weapon.recoil / 0.05,
+                    1
+                ) *
+                0.18
+            );
+
+
         weapon.group.position.set(
             weapon.basePosition.x +
                 bobX +
@@ -1812,12 +1830,12 @@
                 bobY +
                 weapon.swayY +
                 reloadOffsetY +
-                weapon.recoil *
-                0.032,
+                displayRecoil *
+                0.024,
 
             weapon.basePosition.z +
-                weapon.recoil *
-                0.38
+                displayRecoil *
+                0.30
         );
 
 
@@ -1829,8 +1847,8 @@
 
         weapon.group.rotation.set(
             weapon.baseRotation.x +
-                weapon.recoil *
-                3.25 +
+                displayRecoil *
+                3.85 +
                 reloadPitch,
 
             weapon.baseRotation.y +
@@ -3481,11 +3499,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.18";
+        "3.19";
 
 
     console.log(
-        "ZOMBIES BUILD 3.18 ACTIVE"
+        "ZOMBIES BUILD 3.19 ACTIVE"
     );
 
 
