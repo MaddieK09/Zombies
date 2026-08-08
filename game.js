@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.10
-   SOLID OPAQUE PISTOL - NO WIREFRAME
+   BUILD 3.11
+   SOLID PISTOL + HIDE GLB LINES + SMALL MUZZLE FLASH
 ========================================================= */
 
 (function () {
@@ -882,6 +882,22 @@
                 }
 
 
+                /*
+                   Some GLB exports contain Line / LineSegments helper
+                   geometry. Hide all of those so the pistol cannot look
+                   like a transparent wireframe.
+                */
+
+                if (
+                    child.isLine ||
+                    child.isLineSegments ||
+                    child.isPoints
+                ) {
+                    child.visible =
+                        false;
+                }
+
+
                 if (
                     child.isMesh
                 ) {
@@ -930,7 +946,7 @@
 
 
                     let gunColor =
-                        0x343a40;
+                        0x2b3036;
 
 
                     /*
@@ -1251,15 +1267,15 @@
 
     muzzleFlash.position.set(
         0,
-        0.02,
-        -0.36
+        0.015,
+        -0.345
     );
 
 
     muzzleFlash.scale.set(
-        1.8,
-        0.85,
-        2.4
+        1.0,
+        0.55,
+        1.6
     );
 
 
@@ -1282,8 +1298,8 @@
 
     muzzleLight.position.set(
         0,
-        0.02,
-        -0.36
+        0.015,
+        -0.345
     );
 
 
@@ -1448,24 +1464,24 @@
 
 
         muzzleFlashMaterial.opacity =
-            0.95;
+            0.78;
 
 
         muzzleFlash.scale.set(
-            1.5 +
-                Math.random() *
-                0.8,
-            0.65 +
+            0.85 +
                 Math.random() *
                 0.35,
-            2.0 +
+            0.45 +
                 Math.random() *
-                1.0
+                0.20,
+            1.25 +
+                Math.random() *
+                0.45
         );
 
 
         muzzleLight.intensity =
-            2.5;
+            1.2;
     }
 
 
@@ -3379,11 +3395,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.10";
+        "3.11";
 
 
     console.log(
-        "ZOMBIES BUILD 3.10 ACTIVE"
+        "ZOMBIES BUILD 3.11 ACTIVE"
     );
 
 
