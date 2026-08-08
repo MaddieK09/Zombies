@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.9
-   CACHE-BUSTED DARK PISTOL RENDER
+   BUILD 3.10
+   SOLID OPAQUE PISTOL - NO WIREFRAME
 ========================================================= */
 
 (function () {
@@ -930,11 +930,7 @@
 
 
                     let gunColor =
-                        0x1c2025;
-
-
-                    let edgeColor =
-                        0x525a64;
+                        0x343a40;
 
 
                     /*
@@ -951,20 +947,14 @@
                         meshName.includes("mag")
                     ) {
                         gunColor =
-                            0x111418;
-
-                        edgeColor =
-                            0x3a4149;
+                            0x20252a;
                     } else if (
                         meshName.includes("barrel") ||
                         meshName.includes("trigger") ||
                         meshName.includes("sight")
                     ) {
                         gunColor =
-                            0x181d22;
-
-                        edgeColor =
-                            0x626b75;
+                            0x2a3036;
                     }
 
 
@@ -989,7 +979,16 @@
                                 false,
 
                             toneMapped:
-                                false
+                                false,
+
+                            transparent:
+                                false,
+
+                            opacity:
+                                1,
+
+                            colorWrite:
+                                true
                         });
 
 
@@ -998,57 +997,9 @@
 
 
                     /*
-                       Add restrained geometry edges so the actual pistol
-                       shape remains readable without bright lighting.
+                       No wireframe/edge overlay in Build 3.10.
+                       The real GLB mesh is rendered as one solid opaque object.
                     */
-
-                    try {
-                        const edges =
-                            new THREE.EdgesGeometry(
-                                child.geometry,
-                                32
-                            );
-
-
-                        const edgeMaterial =
-                            new THREE.LineBasicMaterial({
-                                color:
-                                    edgeColor,
-
-                                transparent:
-                                    true,
-
-                                opacity:
-                                    0.22,
-
-                                depthTest:
-                                    false,
-
-                                depthWrite:
-                                    false
-                            });
-
-
-                        const edgeLines =
-                            new THREE.LineSegments(
-                                edges,
-                                edgeMaterial
-                            );
-
-
-                        edgeLines.renderOrder =
-                            1001;
-
-
-                        child.add(
-                            edgeLines
-                        );
-                    } catch (edgeError) {
-                        console.warn(
-                            "Pistol edge detail skipped.",
-                            edgeError
-                        );
-                    }
 
 
                     child.renderOrder =
@@ -3428,11 +3379,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.9";
+        "3.10";
 
 
     console.log(
-        "ZOMBIES BUILD 3.9 ACTIVE"
+        "ZOMBIES BUILD 3.10 ACTIVE"
     );
 
 
