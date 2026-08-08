@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.11
-   SOLID PISTOL + HIDE GLB LINES + SMALL MUZZLE FLASH
+   BUILD 3.12
+   SHADED PISTOL + MUZZLE FLASH REMOVED
 ========================================================= */
 
 (function () {
@@ -946,7 +946,7 @@
 
 
                     let gunColor =
-                        0x2b3036;
+                        0x3a4148;
 
 
                     /*
@@ -975,9 +975,15 @@
 
 
                     child.material =
-                        new THREE.MeshBasicMaterial({
+                        new THREE.MeshLambertMaterial({
                             color:
                                 gunColor,
+
+                            emissive:
+                                0x080a0c,
+
+                            emissiveIntensity:
+                                0.18,
 
                             side:
                                 THREE.DoubleSide,
@@ -992,9 +998,6 @@
                                 false,
 
                             fog:
-                                false,
-
-                            toneMapped:
                                 false,
 
                             transparent:
@@ -1283,6 +1286,16 @@
         1002;
 
 
+    /*
+       Build 3.12:
+       Disable the old visible flash sphere entirely.
+       We will rebuild a proper muzzle flash later.
+    */
+
+    muzzleFlash.visible =
+        false;
+
+
     weaponModelHolder.add(
         muzzleFlash
     );
@@ -1464,7 +1477,7 @@
 
 
         muzzleFlashMaterial.opacity =
-            0.78;
+            0;
 
 
         muzzleFlash.scale.set(
@@ -1481,7 +1494,7 @@
 
 
         muzzleLight.intensity =
-            1.2;
+            0;
     }
 
 
@@ -3395,11 +3408,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.11";
+        "3.12";
 
 
     console.log(
-        "ZOMBIES BUILD 3.11 ACTIVE"
+        "ZOMBIES BUILD 3.12 ACTIVE"
     );
 
 
