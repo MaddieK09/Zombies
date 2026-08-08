@@ -761,7 +761,7 @@
 
 
     const PISTOL_MODEL_PATH =
-        "assets/pistol.glb";
+        "Pistol by Quaternius - J3i9KDQ3kt.glb";
 
 
     const MODEL_TARGET_LENGTH =
@@ -3256,7 +3256,7 @@
 
 
     console.log(
-        "Zombies Build 3.4 loaded: real GLB pistol model loader."
+        "Zombies Build 3.4a loaded: root-level real GLB pistol model."
     );
 
 })();
