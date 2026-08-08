@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.7
-   BALANCED GUNMETAL MATERIAL + REAL GLB MODEL
+   BUILD 3.8
+   DARK PISTOL FINISH + EDGE DETAIL
 ========================================================= */
 
 (function () {
@@ -164,7 +164,7 @@
         new THREE.HemisphereLight(
             0xffffff,
             0x5f6670,
-            0.72
+            0.32
         );
 
 
@@ -176,7 +176,7 @@
     const weaponKeyLight =
         new THREE.DirectionalLight(
             0xffffff,
-            1.05
+            0.45
         );
 
 
@@ -195,7 +195,7 @@
     const weaponFillLight =
         new THREE.DirectionalLight(
             0xbfd4ff,
-            0.38
+            0.16
         );
 
 
@@ -930,20 +930,19 @@
 
 
                     let gunColor =
-                        0x30343a;
+                        0x25292e;
 
 
-                    let gunSpecular =
-                        0x777f88;
-
-
-                    let gunShininess =
-                        34;
+                    let edgeColor =
+                        0x626b75;
 
 
                     /*
-                       Keep the pistol dark, but not silhouette-black.
-                       Named grip / magazine pieces get a flatter finish.
+                       BUILD 3.8:
+                       Use an unlit base material so iPhone Safari cannot
+                       wash the pistol out or turn it into a silhouette.
+
+                       Subtle edges preserve the low-poly shape/detail.
                     */
 
                     if (
@@ -952,39 +951,27 @@
                         meshName.includes("mag")
                     ) {
                         gunColor =
-                            0x202327;
+                            0x171a1e;
 
-                        gunSpecular =
-                            0x454a50;
-
-                        gunShininess =
-                            16;
+                        edgeColor =
+                            0x3f464e;
                     } else if (
                         meshName.includes("barrel") ||
                         meshName.includes("trigger") ||
                         meshName.includes("sight")
                     ) {
                         gunColor =
-                            0x252a30;
+                            0x1d2227;
 
-                        gunSpecular =
-                            0x8a939d;
-
-                        gunShininess =
-                            42;
+                        edgeColor =
+                            0x747d87;
                     }
 
 
                     child.material =
-                        new THREE.MeshPhongMaterial({
+                        new THREE.MeshBasicMaterial({
                             color:
                                 gunColor,
-
-                            specular:
-                                gunSpecular,
-
-                            shininess:
-                                gunShininess,
 
                             side:
                                 THREE.DoubleSide,
@@ -999,6 +986,60 @@
 
                     child.material.needsUpdate =
                         true;
+
+
+                    /*
+                       Add restrained geometry edges so the actual pistol
+                       shape remains readable without bright lighting.
+                    */
+
+                    try {
+                        const edges =
+                            new THREE.EdgesGeometry(
+                                child.geometry,
+                                32
+                            );
+
+
+                        const edgeMaterial =
+                            new THREE.LineBasicMaterial({
+                                color:
+                                    edgeColor,
+
+                                transparent:
+                                    true,
+
+                                opacity:
+                                    0.34,
+
+                                depthTest:
+                                    false,
+
+                                depthWrite:
+                                    false
+                            });
+
+
+                        const edgeLines =
+                            new THREE.LineSegments(
+                                edges,
+                                edgeMaterial
+                            );
+
+
+                        edgeLines.renderOrder =
+                            1001;
+
+
+                        child.add(
+                            edgeLines
+                        );
+                    } catch (edgeError) {
+                        console.warn(
+                            "Pistol edge detail skipped.",
+                            edgeError
+                        );
+                    }
 
 
                     child.renderOrder =
