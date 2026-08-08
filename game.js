@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.1
-   GUARANTEED FIRST-PERSON WEAPON RENDERING
+   BUILD 3.2
+   REBUILT PISTOL MODEL + WEAPON POLISH
 ========================================================= */
 
 (function () {
@@ -664,16 +664,16 @@
 
         basePosition:
             new THREE.Vector3(
-                0.30,
-                -0.28,
-                -0.78
+                0.31,
+                -0.34,
+                -0.92
             ),
 
         baseRotation:
             new THREE.Euler(
-                -0.10,
-                -0.05,
-                0.02
+                -0.055,
+                -0.075,
+                0.018
             ),
 
         recoil:
@@ -698,7 +698,7 @@
             0,
 
         reloadDuration:
-            1.15,
+            1.05,
 
         isReloading:
             false
@@ -725,9 +725,9 @@
     */
 
     weapon.group.scale.set(
-        1.35,
-        1.35,
-        1.35
+        1.05,
+        1.05,
+        1.05
     );
 
 
@@ -832,52 +832,181 @@
 
 
     /*
-       Pistol slide.
+       =====================================================
+       REBUILT PISTOL MODEL
+       =====================================================
+
+       Still made from primitives so it stays lightweight,
+       but proportioned much more like a compact semi-auto pistol.
+    */
+
+
+    /*
+       Main slide.
     */
 
     const pistolSlide =
         createWeaponBox(
-            0.20,
-            0.12,
-            0.48,
+            0.18,
+            0.105,
+            0.46,
             0,
-            0.02,
-            -0.08,
+            0.035,
+            -0.11,
             gunMetalMaterial,
             weapon.group
         );
 
 
     /*
-       Barrel / front block.
+       Slight bevel impression using a narrower top strip.
     */
 
     createWeaponBox(
-        0.14,
-        0.09,
-        0.18,
+        0.145,
+        0.026,
+        0.39,
         0,
-        0.015,
-        -0.36,
+        0.100,
+        -0.11,
         gunDarkMaterial,
         weapon.group
     );
 
 
     /*
-       Lower receiver.
+       Front barrel block.
     */
 
     createWeaponBox(
-        0.16,
-        0.11,
-        0.30,
+        0.105,
+        0.072,
+        0.13,
         0,
-        -0.085,
-        -0.02,
+        0.022,
+        -0.385,
         gunDarkMaterial,
         weapon.group
     );
+
+
+    /*
+       Muzzle opening.
+    */
+
+    const muzzleOpeningMaterial =
+        new THREE.MeshBasicMaterial({
+            color: 0x050505,
+            depthTest: false,
+            depthWrite: false
+        });
+
+
+    const muzzleOpening =
+        new THREE.Mesh(
+            new THREE.CircleGeometry(
+                0.026,
+                12
+            ),
+            muzzleOpeningMaterial
+        );
+
+
+    muzzleOpening.position.set(
+        0,
+        0.023,
+        -0.455
+    );
+
+
+    muzzleOpening.rotation.x =
+        0;
+
+
+    muzzleOpening.renderOrder =
+        1004;
+
+
+    weapon.group.add(
+        muzzleOpening
+    );
+
+
+    /*
+       Frame / receiver.
+    */
+
+    createWeaponBox(
+        0.155,
+        0.095,
+        0.30,
+        0,
+        -0.070,
+        -0.025,
+        gunDarkMaterial,
+        weapon.group
+    );
+
+
+    /*
+       Trigger guard - built from three thin pieces.
+    */
+
+    createWeaponBox(
+        0.025,
+        0.105,
+        0.16,
+        -0.078,
+        -0.155,
+        -0.055,
+        gunDarkMaterial,
+        weapon.group
+    );
+
+
+    createWeaponBox(
+        0.025,
+        0.105,
+        0.16,
+        0.078,
+        -0.155,
+        -0.055,
+        gunDarkMaterial,
+        weapon.group
+    );
+
+
+    createWeaponBox(
+        0.155,
+        0.025,
+        0.16,
+        0,
+        -0.205,
+        -0.055,
+        gunDarkMaterial,
+        weapon.group
+    );
+
+
+    /*
+       Trigger.
+    */
+
+    const trigger =
+        createWeaponBox(
+            0.025,
+            0.075,
+            0.035,
+            0,
+            -0.158,
+            -0.045,
+            gunMetalMaterial,
+            weapon.group
+        );
+
+
+    trigger.rotation.x =
+        -0.26;
 
 
     /*
@@ -886,35 +1015,140 @@
 
     const pistolGrip =
         createWeaponBox(
-            0.14,
-            0.30,
-            0.16,
+            0.135,
+            0.31,
+            0.145,
             0,
-            -0.245,
-            0.035,
+            -0.282,
+            0.055,
             gripMaterial,
             weapon.group
         );
 
 
     pistolGrip.rotation.x =
-        -0.18;
+        -0.22;
 
 
     /*
-       Tiny front sight.
+       Grip side panel.
+    */
+
+    const gripPanelMaterial =
+        new THREE.MeshBasicMaterial({
+            color: 0x2a2d31,
+            depthTest: false,
+            depthWrite: false
+        });
+
+
+    const gripPanel =
+        createWeaponBox(
+            0.145,
+            0.22,
+            0.03,
+            0,
+            -0.285,
+            -0.022,
+            gripPanelMaterial,
+            weapon.group
+        );
+
+
+    gripPanel.rotation.x =
+        -0.22;
+
+
+    /*
+       Magazine base plate.
+    */
+
+    const magazineBase =
+        createWeaponBox(
+            0.155,
+            0.028,
+            0.155,
+            0,
+            -0.445,
+            0.095,
+            gunDarkMaterial,
+            weapon.group
+        );
+
+
+    magazineBase.rotation.x =
+        -0.22;
+
+
+    /*
+       Front sight.
     */
 
     createWeaponBox(
-        0.035,
-        0.045,
-        0.055,
+        0.025,
+        0.042,
+        0.040,
         0,
-        0.10,
-        -0.28,
+        0.137,
+        -0.325,
         gunDarkMaterial,
         weapon.group
     );
+
+
+    /*
+       Rear sights.
+    */
+
+    createWeaponBox(
+        0.026,
+        0.040,
+        0.042,
+        -0.055,
+        0.137,
+        0.055,
+        gunDarkMaterial,
+        weapon.group
+    );
+
+
+    createWeaponBox(
+        0.026,
+        0.040,
+        0.042,
+        0.055,
+        0.137,
+        0.055,
+        gunDarkMaterial,
+        weapon.group
+    );
+
+
+    /*
+       Slide serrations.
+    */
+
+    for (
+        let i = 0;
+        i < 5;
+        i += 1
+    ) {
+        const z =
+            0.025 +
+            i * 0.032;
+
+
+        createWeaponBox(
+            0.188,
+            0.008,
+            0.010,
+            0,
+            0.078,
+            z,
+            gunDarkMaterial,
+            weapon.group
+        );
+    }
 
 
     /*
@@ -924,24 +1158,24 @@
     const rightHand =
         new THREE.Mesh(
             new THREE.BoxGeometry(
-                0.17,
-                0.18,
-                0.20
+                0.145,
+                0.16,
+                0.18
             ),
             skinMaterial
         );
 
 
     rightHand.position.set(
-        0.04,
-        -0.30,
-        0.08
+        0.045,
+        -0.300,
+        0.105
     );
 
 
     rightHand.rotation.set(
-        0.08,
-        0,
+        0.13,
+        0.03,
         0.08
     );
 
@@ -962,25 +1196,25 @@
     const rightForearm =
         new THREE.Mesh(
             new THREE.BoxGeometry(
-                0.19,
-                0.18,
-                0.50
+                0.16,
+                0.16,
+                0.46
             ),
             sleeveMaterial
         );
 
 
     rightForearm.position.set(
-        0.08,
-        -0.37,
-        0.31
+        0.10,
+        -0.385,
+        0.39
     );
 
 
     rightForearm.rotation.set(
-        0.05,
-        -0.03,
-        0.08
+        0.04,
+        -0.07,
+        0.10
     );
 
 
@@ -1000,25 +1234,25 @@
     const leftHand =
         new THREE.Mesh(
             new THREE.BoxGeometry(
-                0.15,
                 0.14,
-                0.18
+                0.13,
+                0.16
             ),
             skinMaterial
         );
 
 
     leftHand.position.set(
-        -0.13,
-        -0.17,
-        -0.04
+        -0.105,
+        -0.178,
+        -0.035
     );
 
 
     leftHand.rotation.set(
-        -0.18,
-        0.18,
-        -0.18
+        -0.10,
+        0.20,
+        -0.20
     );
 
 
@@ -1038,25 +1272,25 @@
     const leftForearm =
         new THREE.Mesh(
             new THREE.BoxGeometry(
-                0.17,
-                0.17,
-                0.50
+                0.15,
+                0.15,
+                0.45
             ),
             sleeveMaterial
         );
 
 
     leftForearm.position.set(
-        -0.23,
-        -0.28,
-        0.29
+        -0.20,
+        -0.315,
+        0.34
     );
 
 
     leftForearm.rotation.set(
         -0.08,
-        0.15,
-        -0.18
+        0.16,
+        -0.20
     );
 
 
@@ -1096,8 +1330,8 @@
 
     muzzleFlash.position.set(
         0,
-        0.02,
-        -0.50
+        0.022,
+        -0.49
     );
 
 
@@ -1127,8 +1361,8 @@
 
     muzzleLight.position.set(
         0,
-        0.02,
-        -0.50
+        0.022,
+        -0.49
     );
 
 
@@ -1316,14 +1550,14 @@
 
     function addWeaponRecoil() {
         weapon.recoilVelocity +=
-            0.115;
+            0.095;
 
 
         weapon.recoil =
             Math.min(
                 weapon.recoil +
-                    0.025,
-                0.16
+                    0.018,
+                0.12
             );
 
 
@@ -3228,7 +3462,7 @@
 
 
     console.log(
-        "Zombies Build 3.1 loaded: dedicated weapon render scene."
+        "Zombies Build 3.2 loaded: rebuilt pistol model + weapon polish."
     );
 
 })();
