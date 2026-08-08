@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.6
-   FORCED GUNMETAL MATERIAL + REAL GLB MODEL
+   BUILD 3.7
+   BALANCED GUNMETAL MATERIAL + REAL GLB MODEL
 ========================================================= */
 
 (function () {
@@ -164,7 +164,7 @@
         new THREE.HemisphereLight(
             0xffffff,
             0x5f6670,
-            1.35
+            0.72
         );
 
 
@@ -176,7 +176,7 @@
     const weaponKeyLight =
         new THREE.DirectionalLight(
             0xffffff,
-            1.75
+            1.05
         );
 
 
@@ -195,7 +195,7 @@
     const weaponFillLight =
         new THREE.DirectionalLight(
             0xbfd4ff,
-            0.75
+            0.38
         );
 
 
@@ -903,7 +903,7 @@
                     */
 
                     /*
-                       BUILD 3.6 MATERIAL OVERRIDE
+                       BUILD 3.7 MATERIAL OVERRIDE
 
                        The uploaded GLB geometry is good, but its exported
                        material is rendering as a pure black silhouette on
@@ -930,21 +930,20 @@
 
 
                     let gunColor =
-                        0x555d66;
+                        0x30343a;
 
 
-                    let gunMetalness =
-                        0.72;
+                    let gunSpecular =
+                        0x777f88;
 
 
-                    let gunRoughness =
-                        0.32;
+                    let gunShininess =
+                        34;
 
 
                     /*
-                       If the GLB is split into sensibly named pieces,
-                       give grips / magazines / triggers darker finishes.
-                       If it is one mesh, it simply gets the main gunmetal.
+                       Keep the pistol dark, but not silhouette-black.
+                       Named grip / magazine pieces get a flatter finish.
                     */
 
                     if (
@@ -953,26 +952,26 @@
                         meshName.includes("mag")
                     ) {
                         gunColor =
-                            0x25292e;
+                            0x202327;
 
-                        gunMetalness =
-                            0.22;
+                        gunSpecular =
+                            0x454a50;
 
-                        gunRoughness =
-                            0.68;
+                        gunShininess =
+                            16;
                     } else if (
                         meshName.includes("barrel") ||
                         meshName.includes("trigger") ||
                         meshName.includes("sight")
                     ) {
                         gunColor =
-                            0x343a40;
+                            0x252a30;
 
-                        gunMetalness =
-                            0.80;
+                        gunSpecular =
+                            0x8a939d;
 
-                        gunRoughness =
-                            0.28;
+                        gunShininess =
+                            42;
                     }
 
 
@@ -982,10 +981,10 @@
                                 gunColor,
 
                             specular:
-                                0xc7d0d9,
+                                gunSpecular,
 
                             shininess:
-                                72,
+                                gunShininess,
 
                             side:
                                 THREE.DoubleSide,
@@ -996,19 +995,6 @@
                             depthWrite:
                                 false
                         });
-
-
-                    /*
-                       Store these for future upgrades even though
-                       MeshPhongMaterial does not directly use PBR values.
-                    */
-
-                    child.userData.weaponMetalness =
-                        gunMetalness;
-
-
-                    child.userData.weaponRoughness =
-                        gunRoughness;
 
 
                     child.material.needsUpdate =
