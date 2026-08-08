@@ -11,7 +11,10 @@
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
 
     <title>Zombies</title>
 
@@ -21,7 +24,7 @@
 <body>
 
     <!-- =====================================================
-         PORTRAIT / ROTATION WARNING
+         ROTATE DEVICE SCREEN
     ====================================================== -->
 
     <div id="rotate-screen">
@@ -46,14 +49,19 @@
 
         <div id="hud">
 
+            <!-- ROUND -->
             <div id="round">
                 ROUND <span id="round-number">1</span>
             </div>
 
+
+            <!-- POINTS -->
             <div id="points">
                 <span id="points-value">500</span>
             </div>
 
+
+            <!-- AMMO -->
             <div id="ammo">
 
                 <span id="mag-ammo">8</span>
@@ -105,6 +113,7 @@
                 RELOAD
             </button>
 
+
             <button
                 id="fire-button"
                 type="button"
@@ -117,8 +126,15 @@
 
 
         <!-- =================================================
-             INTERACTION MESSAGE
-             Hidden until JavaScript needs it later
+             INTERACTION PROMPT
+
+             We'll use this later for:
+             - Doors
+             - Wall weapons
+             - Mystery box
+             - Perks
+             - Power
+             - Other interactable objects
         ================================================== -->
 
         <div id="interaction-prompt" hidden>
@@ -129,23 +145,12 @@
 
 
     <!-- =====================================================
-         THREE.JS
+         GAME JAVASCRIPT
 
-         This gives game.js access to the THREE object.
-         We are loading it now so the HTML is already prepared
-         before we begin building the actual 3D game.
+         game.js is an ES module so it can import Three.js.
     ====================================================== -->
 
-    <script
-        src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"
-    ></script>
-
-
-    <!-- =====================================================
-         GAME CODE
-    ====================================================== -->
-
-    <script src="game.js"></script>
+    <script type="module" src="game.js"></script>
 
 </body>
 
