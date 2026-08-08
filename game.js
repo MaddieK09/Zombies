@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.5
-   REAL PISTOL MATERIALS + WEAPON LIGHTING
+   BUILD 3.6
+   FORCED GUNMETAL MATERIAL + REAL GLB MODEL
 ========================================================= */
 
 (function () {
@@ -902,95 +902,117 @@
                        doesn't need to interact with world depth.
                     */
 
+                    /*
+                       BUILD 3.6 MATERIAL OVERRIDE
+
+                       The uploaded GLB geometry is good, but its exported
+                       material is rendering as a pure black silhouette on
+                       iPhone Safari.
+
+                       Instead of trusting the imported material, give the
+                       REAL pistol mesh a fresh gunmetal material in code.
+                    */
+
                     if (
-                        child.material
+                        child.geometry &&
+                        child.geometry.attributes &&
+                        !child.geometry.attributes.normal
                     ) {
-                        /*
-                           Keep the GLB's original materials/colors.
-                           Only change depth behavior so the gun stays
-                           visible in the dedicated first-person pass.
-                        */
-
-                        const sourceMaterials =
-                            Array.isArray(
-                                child.material
-                            )
-                                ? child.material
-                                : [
-                                    child.material
-                                ];
-
-
-                        const preparedMaterials =
-                            sourceMaterials.map(
-                                function (sourceMaterial) {
-                                    const material =
-                                        sourceMaterial.clone();
-
-
-                                    material.depthTest =
-                                        false;
-
-
-                                    material.depthWrite =
-                                        false;
-
-
-                                    material.side =
-                                        THREE.FrontSide;
-
-
-                                    /*
-                                       Avoid accidental near-black output
-                                       from unsupported/odd export settings.
-                                    */
-
-                                    if (
-                                        material.color &&
-                                        material.color.r < 0.03 &&
-                                        material.color.g < 0.03 &&
-                                        material.color.b < 0.03 &&
-                                        !material.map
-                                    ) {
-                                        material.color.setHex(
-                                            0x3c4148
-                                        );
-                                    }
-
-
-                                    /*
-                                       Tiny emissive lift prevents the pistol
-                                       from vanishing in very dark scenes while
-                                       retaining its actual material appearance.
-                                    */
-
-                                    if (
-                                        material.emissive
-                                    ) {
-                                        material.emissiveIntensity =
-                                            Math.max(
-                                                material.emissiveIntensity || 0,
-                                                0.10
-                                            );
-                                    }
-
-
-                                    material.needsUpdate =
-                                        true;
-
-
-                                    return material;
-                                }
-                            );
-
-
-                        child.material =
-                            Array.isArray(
-                                child.material
-                            )
-                                ? preparedMaterials
-                                : preparedMaterials[0];
+                        child.geometry.computeVertexNormals();
                     }
+
+
+                    const meshName =
+                        (
+                            child.name ||
+                            ""
+                        ).toLowerCase();
+
+
+                    let gunColor =
+                        0x555d66;
+
+
+                    let gunMetalness =
+                        0.72;
+
+
+                    let gunRoughness =
+                        0.32;
+
+
+                    /*
+                       If the GLB is split into sensibly named pieces,
+                       give grips / magazines / triggers darker finishes.
+                       If it is one mesh, it simply gets the main gunmetal.
+                    */
+
+                    if (
+                        meshName.includes("grip") ||
+                        meshName.includes("handle") ||
+                        meshName.includes("mag")
+                    ) {
+                        gunColor =
+                            0x25292e;
+
+                        gunMetalness =
+                            0.22;
+
+                        gunRoughness =
+                            0.68;
+                    } else if (
+                        meshName.includes("barrel") ||
+                        meshName.includes("trigger") ||
+                        meshName.includes("sight")
+                    ) {
+                        gunColor =
+                            0x343a40;
+
+                        gunMetalness =
+                            0.80;
+
+                        gunRoughness =
+                            0.28;
+                    }
+
+
+                    child.material =
+                        new THREE.MeshPhongMaterial({
+                            color:
+                                gunColor,
+
+                            specular:
+                                0xc7d0d9,
+
+                            shininess:
+                                72,
+
+                            side:
+                                THREE.DoubleSide,
+
+                            depthTest:
+                                false,
+
+                            depthWrite:
+                                false
+                        });
+
+
+                    /*
+                       Store these for future upgrades even though
+                       MeshPhongMaterial does not directly use PBR values.
+                    */
+
+                    child.userData.weaponMetalness =
+                        gunMetalness;
+
+
+                    child.userData.weaponRoughness =
+                        gunRoughness;
+
+
+                    child.material.needsUpdate =
+                        true;
 
 
                     child.renderOrder =
