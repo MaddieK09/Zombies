@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3
-   FIRST-PERSON PISTOL + HITSCAN SHOOTING
+   BUILD 3.1
+   GUARANTEED FIRST-PERSON WEAPON RENDERING
 ========================================================= */
 
 (function () {
@@ -116,6 +116,33 @@
         "YXZ";
 
 
+    /*
+       Dedicated first-person weapon scene.
+
+       This is rendered AFTER the 3D world so the pistol cannot
+       disappear inside walls or get lost because of depth/clipping.
+    */
+
+    const weaponScene =
+        new THREE.Scene();
+
+
+    const weaponCamera =
+        new THREE.PerspectiveCamera(
+            58,
+            1,
+            0.01,
+            10
+        );
+
+
+    weaponCamera.position.set(
+        0,
+        0,
+        0
+    );
+
+
     let renderer;
 
 
@@ -142,6 +169,16 @@
 
     renderer.outputEncoding =
         THREE.sRGBEncoding;
+
+
+    /*
+       We manually clear once per frame, then render:
+       1. world
+       2. weapon overlay
+    */
+
+    renderer.autoClear =
+        false;
 
 
     /* =====================================================
@@ -621,27 +658,22 @@
        changing the firing/reload system.
     */
 
-    scene.add(
-        camera
-    );
-
-
     const weapon = {
         group:
             new THREE.Group(),
 
         basePosition:
             new THREE.Vector3(
-                0.36,
-                -0.34,
-                -0.72
+                0.30,
+                -0.28,
+                -0.78
             ),
 
         baseRotation:
             new THREE.Euler(
-                -0.06,
-                -0.04,
-                0.015
+                -0.10,
+                -0.05,
+                0.02
             ),
 
         recoil:
@@ -673,7 +705,7 @@
     };
 
 
-    camera.add(
+    weaponScene.add(
         weapon.group
     );
 
@@ -688,15 +720,30 @@
     );
 
 
+    /*
+       Slightly oversized for phone screens so it reads clearly.
+    */
+
+    weapon.group.scale.set(
+        1.35,
+        1.35,
+        1.35
+    );
+
+
     function makeWeaponMaterial(
         color,
         roughness,
         metalness
     ) {
-        return new THREE.MeshStandardMaterial({
+        /*
+           MeshBasicMaterial intentionally ignores world lighting.
+           The gun therefore stays readable even in dark rooms and
+           behaves consistently on mobile Safari.
+        */
+
+        return new THREE.MeshBasicMaterial({
             color: color,
-            roughness: roughness,
-            metalness: metalness,
             depthTest: false,
             depthWrite: false
         });
@@ -3047,6 +3094,14 @@
         camera.updateProjectionMatrix();
 
 
+        weaponCamera.aspect =
+            width /
+            height;
+
+
+        weaponCamera.updateProjectionMatrix();
+
+
         renderer.setPixelRatio(
             Math.min(
                 window.devicePixelRatio ||
@@ -3129,9 +3184,32 @@
         );
 
 
+        /*
+           WORLD PASS
+        */
+
+        renderer.clear();
+
+
         renderer.render(
             scene,
             camera
+        );
+
+
+        /*
+           FIRST-PERSON WEAPON PASS
+
+           Clear only depth, not the color buffer, so the pistol
+           is drawn on top of the world instead of replacing it.
+        */
+
+        renderer.clearDepth();
+
+
+        renderer.render(
+            weaponScene,
+            weaponCamera
         );
     }
 
@@ -3150,7 +3228,7 @@
 
 
     console.log(
-        "Zombies Build 3 loaded: pistol + raycast shooting."
+        "Zombies Build 3.1 loaded: dedicated weapon render scene."
     );
 
 })();
