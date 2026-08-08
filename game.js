@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.19
-   PEAK-SNAP RECOIL + DECISIVE RETURN
+   BUILD 3.20
+   TIME-BASED SHOT RECOIL PULSE
 ========================================================= */
 
 (function () {
@@ -748,6 +748,15 @@
             0,
 
         recoilVelocity:
+            0,
+
+        recoilPulseTime:
+            0,
+
+        recoilPulseDuration:
+            0.115,
+
+        recoilPulseStrength:
             0,
 
         swayX:
@@ -1547,24 +1556,40 @@
 
 
     function addWeaponRecoil() {
-        weapon.recoilVelocity +=
-            0.090;
+        /*
+           Build 3.20:
+           Every shot starts a fresh short recoil pulse.
+
+           This makes rapid fire read as individual shots instead of
+           blending into one long springy raised position.
+        */
+
+        weapon.recoilPulseTime =
+            0;
 
 
-        weapon.recoil =
-            Math.min(
-                weapon.recoil +
-                    0.016,
-                0.049
-            );
+        weapon.recoilPulseStrength =
+            1;
 
 
         /*
-           Tiny camera kick.
+           Clear legacy spring state so it cannot accumulate.
+        */
+
+        weapon.recoil =
+            0;
+
+
+        weapon.recoilVelocity =
+            0;
+
+
+        /*
+           Keep camera kick restrained.
         */
 
         player.pitch +=
-            0.0024 +
+            0.0022 +
             Math.random() *
             0.0007;
 
@@ -1587,43 +1612,96 @@
         speed
     ) {
         /*
-           Recoil spring.
+           Build 3.20 time-based recoil pulse.
+
+           0% -> 24% of the pulse:
+           very fast ease-out snap to peak.
+
+           24% -> 100%:
+           controlled smooth return to rest.
+
+           Every new shot restarts this pulse.
         */
 
-        weapon.recoilVelocity +=
-            (
-                -weapon.recoil *
-                44
-            ) *
-            deltaTime;
+        let recoilPulse =
+            0;
 
 
-        weapon.recoilVelocity *=
-            Math.pow(
-                0.00018,
-                deltaTime
-            );
+        if (
+            weapon.recoilPulseStrength >
+            0
+        ) {
+            weapon.recoilPulseTime +=
+                deltaTime;
 
 
-        weapon.recoilVelocity =
-            THREE.MathUtils.clamp(
-                weapon.recoilVelocity,
-                -0.26,
-                0.26
-            );
+            const recoilT =
+                Math.min(
+                    weapon.recoilPulseTime /
+                    weapon.recoilPulseDuration,
+                    1
+                );
 
 
-        weapon.recoil +=
-            weapon.recoilVelocity *
-            deltaTime;
+            if (
+                recoilT <
+                0.24
+            ) {
+                const kickT =
+                    recoilT /
+                    0.24;
 
 
-        weapon.recoil =
-            THREE.MathUtils.clamp(
-                weapon.recoil,
-                0,
-                0.050
-            );
+                recoilPulse =
+                    1 -
+                    Math.pow(
+                        1 -
+                        kickT,
+                        3
+                    );
+            } else {
+                const recoverT =
+                    (
+                        recoilT -
+                        0.24
+                    ) /
+                    0.76;
+
+
+                recoilPulse =
+                    1 -
+                    (
+                        recoverT *
+                        recoverT *
+                        (
+                            3 -
+                            2 *
+                            recoverT
+                        )
+                    );
+            }
+
+
+            recoilPulse *=
+                weapon.recoilPulseStrength;
+
+
+            if (
+                recoilT >=
+                1
+            ) {
+                weapon.recoilPulseStrength =
+                    0;
+
+
+                weapon.recoilPulseTime =
+                    0;
+
+
+                recoilPulse =
+                    0;
+            }
+        }
 
 
         /*
@@ -1796,28 +1874,12 @@
 
 
         /*
-           Build 3.16 recoil:
-           Keep translation small. The visual punch should come mostly
-           from rotation around the grip rather than the whole weapon
-           sliding across the screen.
-        */
-
-        /*
-           Peak emphasis:
-           exaggerate the top of the recoil curve slightly so each shot
-           visibly "lands" at its peak before returning.
+           Build 3.20:
+           Use the normalized pulse directly for the weapon transform.
         */
 
         const displayRecoil =
-            weapon.recoil *
-            (
-                1 +
-                Math.min(
-                    weapon.recoil / 0.05,
-                    1
-                ) *
-                0.18
-            );
+            recoilPulse;
 
 
         weapon.group.position.set(
@@ -1831,11 +1893,11 @@
                 weapon.swayY +
                 reloadOffsetY +
                 displayRecoil *
-                0.024,
+                0.010,
 
             weapon.basePosition.z +
                 displayRecoil *
-                0.30
+                0.034
         );
 
 
@@ -1848,17 +1910,21 @@
         weapon.group.rotation.set(
             weapon.baseRotation.x +
                 displayRecoil *
-                3.85 +
+                0.165 +
                 reloadPitch,
 
             weapon.baseRotation.y +
                 weapon.swayX *
-                0.55,
+                0.55 +
+                displayRecoil *
+                0.006,
 
             weapon.baseRotation.z +
                 bobX *
                 -0.35 +
-                reloadRoll
+                reloadRoll -
+                displayRecoil *
+                0.008
         );
 
 
@@ -3499,11 +3565,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.19";
+        "3.20";
 
 
     console.log(
-        "ZOMBIES BUILD 3.19 ACTIVE"
+        "ZOMBIES BUILD 3.20 ACTIVE"
     );
 
 
