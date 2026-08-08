@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.14
-   RECOIL STABILITY PASS
+   BUILD 3.15
+   REALISTIC PISTOL RECOIL PASS
 ========================================================= */
 
 (function () {
@@ -1548,14 +1548,14 @@
 
     function addWeaponRecoil() {
         weapon.recoilVelocity +=
-            0.028;
+            0.055;
 
 
         weapon.recoil =
             Math.min(
                 weapon.recoil +
-                    0.006,
-                0.030
+                    0.011,
+                0.048
             );
 
 
@@ -1564,9 +1564,9 @@
         */
 
         player.pitch +=
-            0.0028 +
+            0.0065 +
             Math.random() *
-            0.0012;
+            0.0020;
 
 
         player.yaw +=
@@ -1574,7 +1574,7 @@
                 Math.random() -
                 0.5
             ) *
-            0.0012;
+            0.0022;
 
 
         updateCameraRotation();
@@ -1593,14 +1593,14 @@
         weapon.recoilVelocity +=
             (
                 -weapon.recoil *
-                52
+                42
             ) *
             deltaTime;
 
 
         weapon.recoilVelocity *=
             Math.pow(
-                0.00008,
+                0.00028,
                 deltaTime
             );
 
@@ -1608,8 +1608,8 @@
         weapon.recoilVelocity =
             THREE.MathUtils.clamp(
                 weapon.recoilVelocity,
-                -0.12,
-                0.12
+                -0.18,
+                0.18
             );
 
 
@@ -1622,7 +1622,7 @@
             THREE.MathUtils.clamp(
                 weapon.recoil,
                 0,
-                0.035
+                0.050
             );
 
 
@@ -1795,26 +1795,38 @@
         }
 
 
+        const recoilSideKick =
+            Math.sin(
+                weapon.recoil *
+                70
+            ) *
+            0.004;
+
+
         weapon.group.position.set(
             weapon.basePosition.x +
                 bobX +
                 weapon.swayX +
-                reloadOffsetX,
+                reloadOffsetX +
+                recoilSideKick,
 
             weapon.basePosition.y -
                 bobY +
                 weapon.swayY +
-                reloadOffsetY,
+                reloadOffsetY +
+                weapon.recoil *
+                0.10,
 
             weapon.basePosition.z +
-                weapon.recoil
+                weapon.recoil *
+                1.35
         );
 
 
         weapon.group.rotation.set(
             weapon.baseRotation.x +
                 weapon.recoil *
-                0.28 +
+                0.72 +
                 reloadPitch,
 
             weapon.baseRotation.y +
@@ -1824,7 +1836,9 @@
             weapon.baseRotation.z +
                 bobX *
                 -0.7 +
-                reloadRoll
+                reloadRoll +
+                weapon.recoil *
+                -0.18
         );
 
 
@@ -3465,11 +3479,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.14";
+        "3.15";
 
 
     console.log(
-        "ZOMBIES BUILD 3.14 ACTIVE"
+        "ZOMBIES BUILD 3.15 ACTIVE"
     );
 
 
