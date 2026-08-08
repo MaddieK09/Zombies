@@ -1,10 +1,12 @@
 /* =========================================================
    ZOMBIES - 3D FOUNDATION TEST
+   BUILD 2: MOVEMENT POLISH + COLLISION
    Stable non-module build for GitHub Pages + mobile Safari
 ========================================================= */
 
 (function () {
     "use strict";
+
 
     /* =====================================================
        ERROR SCREEN
@@ -172,7 +174,21 @@
         keyboardForward: 0,
         keyboardRight: 0,
 
-        speed: 4.0
+        velocityX: 0,
+        velocityZ: 0,
+
+        walkSpeed: 4.25,
+        acceleration: 18,
+        deceleration: 14,
+
+        radius: 0.38,
+
+        touchSensitivity: 0.0038,
+        mouseSensitivity: 0.0028,
+
+        cameraBobTime: 0,
+        cameraBobAmount: 0.025,
+        cameraBobSpeed: 9
     };
 
 
@@ -191,7 +207,29 @@
     const ROOM_DEPTH = 22;
     const ROOM_HEIGHT = 6;
 
-    const PLAYER_PADDING = 0.7;
+    const WALL_PADDING = 0.45;
+
+
+    /* =====================================================
+       COLLISION OBJECTS
+    ====================================================== */
+
+    const collisionBoxes = [];
+
+
+    function addCollisionBox(
+        centerX,
+        centerZ,
+        width,
+        depth
+    ) {
+        collisionBoxes.push({
+            minX: centerX - width / 2,
+            maxX: centerX + width / 2,
+            minZ: centerZ - depth / 2,
+            maxZ: centerZ + depth / 2
+        });
+    }
 
 
     /* =====================================================
@@ -251,6 +289,40 @@
         mesh.receiveShadow = receiveShadow !== false;
 
         scene.add(mesh);
+
+        return mesh;
+    }
+
+
+    function createSolidBox(
+        width,
+        height,
+        depth,
+        x,
+        y,
+        z,
+        meshMaterial,
+        castShadow,
+        receiveShadow
+    ) {
+        const mesh = createBox(
+            width,
+            height,
+            depth,
+            x,
+            y,
+            z,
+            meshMaterial,
+            castShadow,
+            receiveShadow
+        );
+
+        addCollisionBox(
+            x,
+            z,
+            width,
+            depth
+        );
 
         return mesh;
     }
@@ -344,10 +416,10 @@
 
 
     /* =====================================================
-       CENTER PILLAR
+       SOLID ROOM OBJECTS
     ====================================================== */
 
-    createBox(
+    createSolidBox(
         1.4,
         4.2,
         1.4,
@@ -360,11 +432,7 @@
     );
 
 
-    /* =====================================================
-       CRATES
-    ====================================================== */
-
-    createBox(
+    createSolidBox(
         2.4,
         1.6,
         2,
@@ -376,7 +444,8 @@
         true
     );
 
-    createBox(
+
+    createSolidBox(
         2.8,
         1.1,
         1.8,
@@ -388,7 +457,8 @@
         true
     );
 
-    createBox(
+
+    createSolidBox(
         1.7,
         2.2,
         1.7,
@@ -471,8 +541,6 @@
 
     /* =====================================================
        FLOOR GRID
-
-       Makes movement immediately obvious.
     ====================================================== */
 
     const grid = new THREE.GridHelper(
@@ -492,12 +560,13 @@
     ====================================================== */
 
     function updateCameraRotation() {
-        const limit = Math.PI / 2 - 0.05;
+        const pitchLimit =
+            Math.PI / 2 - 0.08;
 
         player.pitch = THREE.MathUtils.clamp(
             player.pitch,
-            -limit,
-            limit
+            -pitchLimit,
+            pitchLimit
         );
 
         camera.rotation.y = player.yaw;
@@ -506,12 +575,157 @@
 
 
     /* =====================================================
-       MOVEMENT VECTORS
+       COLLISION
     ====================================================== */
 
-    const forwardVector = new THREE.Vector3();
-    const rightVector = new THREE.Vector3();
-    const moveVector = new THREE.Vector3();
+    function circleIntersectsBox(
+        x,
+        z,
+        radius,
+        box
+    ) {
+        const closestX =
+            Math.max(
+                box.minX,
+                Math.min(
+                    x,
+                    box.maxX
+                )
+            );
+
+        const closestZ =
+            Math.max(
+                box.minZ,
+                Math.min(
+                    z,
+                    box.maxZ
+                )
+            );
+
+        const dx =
+            x - closestX;
+
+        const dz =
+            z - closestZ;
+
+        return (
+            dx * dx +
+            dz * dz
+        ) < radius * radius;
+    }
+
+
+    function collidesAt(
+        x,
+        z
+    ) {
+        const minX =
+            -ROOM_WIDTH / 2 +
+            WALL_PADDING +
+            player.radius;
+
+        const maxX =
+            ROOM_WIDTH / 2 -
+            WALL_PADDING -
+            player.radius;
+
+        const minZ =
+            -ROOM_DEPTH / 2 +
+            WALL_PADDING +
+            player.radius;
+
+        const maxZ =
+            ROOM_DEPTH / 2 -
+            WALL_PADDING -
+            player.radius;
+
+
+        if (
+            x < minX ||
+            x > maxX ||
+            z < minZ ||
+            z > maxZ
+        ) {
+            return true;
+        }
+
+
+        for (
+            let i = 0;
+            i < collisionBoxes.length;
+            i += 1
+        ) {
+            if (
+                circleIntersectsBox(
+                    x,
+                    z,
+                    player.radius,
+                    collisionBoxes[i]
+                )
+            ) {
+                return true;
+            }
+        }
+
+
+        return false;
+    }
+
+
+    function moveWithCollision(
+        deltaX,
+        deltaZ
+    ) {
+        /*
+            Axis-separated collision is intentionally used here.
+
+            If X is blocked but Z is free (or vice versa), the player
+            slides along the object instead of stopping dead.
+        */
+
+        const nextX =
+            player.x + deltaX;
+
+        if (
+            !collidesAt(
+                nextX,
+                player.z
+            )
+        ) {
+            player.x = nextX;
+        } else {
+            player.velocityX = 0;
+        }
+
+
+        const nextZ =
+            player.z + deltaZ;
+
+        if (
+            !collidesAt(
+                player.x,
+                nextZ
+            )
+        ) {
+            player.z = nextZ;
+        } else {
+            player.velocityZ = 0;
+        }
+    }
+
+
+    /* =====================================================
+       MOVEMENT
+    ====================================================== */
+
+    const forwardVector =
+        new THREE.Vector3();
+
+    const rightVector =
+        new THREE.Vector3();
+
+    const targetMove =
+        new THREE.Vector3();
 
 
     function getMovementInput() {
@@ -523,15 +737,18 @@
             player.joystickRight +
             player.keyboardRight;
 
-        const length = Math.hypot(
-            forward,
-            right
-        );
+        const length =
+            Math.hypot(
+                forward,
+                right
+            );
+
 
         if (length > 1) {
             forward /= length;
             right /= length;
         }
+
 
         return {
             forward: forward,
@@ -540,21 +757,34 @@
     }
 
 
-    function updatePlayer(deltaTime) {
-        const input = getMovementInput();
-
-        if (
-            Math.abs(input.forward) < 0.001 &&
-            Math.abs(input.right) < 0.001
-        ) {
-            camera.position.set(
-                player.x,
-                player.y,
-                player.z
+    function approach(
+        current,
+        target,
+        amount
+    ) {
+        if (current < target) {
+            return Math.min(
+                current + amount,
+                target
             );
-
-            return;
         }
+
+        if (current > target) {
+            return Math.max(
+                current - amount,
+                target
+            );
+        }
+
+        return target;
+    }
+
+
+    function updatePlayer(
+        deltaTime
+    ) {
+        const input =
+            getMovementInput();
 
 
         forwardVector.set(
@@ -571,50 +801,112 @@
         );
 
 
-        moveVector.set(0, 0, 0);
+        targetMove.set(
+            0,
+            0,
+            0
+        );
 
-        moveVector.addScaledVector(
+
+        targetMove.addScaledVector(
             forwardVector,
             input.forward
         );
 
-        moveVector.addScaledVector(
+
+        targetMove.addScaledVector(
             rightVector,
             input.right
         );
 
 
-        if (moveVector.lengthSq() > 1) {
-            moveVector.normalize();
+        if (
+            targetMove.lengthSq() > 1
+        ) {
+            targetMove.normalize();
         }
 
 
-        moveVector.multiplyScalar(
-            player.speed * deltaTime
+        const targetVelocityX =
+            targetMove.x *
+            player.walkSpeed;
+
+        const targetVelocityZ =
+            targetMove.z *
+            player.walkSpeed;
+
+
+        const hasMovementInput =
+            Math.abs(input.forward) > 0.01 ||
+            Math.abs(input.right) > 0.01;
+
+
+        const rate =
+            hasMovementInput
+                ? player.acceleration
+                : player.deceleration;
+
+
+        player.velocityX =
+            approach(
+                player.velocityX,
+                targetVelocityX,
+                rate * deltaTime
+            );
+
+
+        player.velocityZ =
+            approach(
+                player.velocityZ,
+                targetVelocityZ,
+                rate * deltaTime
+            );
+
+
+        moveWithCollision(
+            player.velocityX * deltaTime,
+            player.velocityZ * deltaTime
         );
 
 
-        player.x += moveVector.x;
-        player.z += moveVector.z;
+        const horizontalSpeed =
+            Math.hypot(
+                player.velocityX,
+                player.velocityZ
+            );
 
 
-        player.x = THREE.MathUtils.clamp(
-            player.x,
-            -ROOM_WIDTH / 2 + PLAYER_PADDING,
-            ROOM_WIDTH / 2 - PLAYER_PADDING
-        );
+        let bobY = 0;
 
 
-        player.z = THREE.MathUtils.clamp(
-            player.z,
-            -ROOM_DEPTH / 2 + PLAYER_PADDING,
-            ROOM_DEPTH / 2 - PLAYER_PADDING
-        );
+        if (
+            horizontalSpeed > 0.15 &&
+            hasMovementInput
+        ) {
+            player.cameraBobTime +=
+                deltaTime *
+                player.cameraBobSpeed *
+                (
+                    0.65 +
+                    horizontalSpeed /
+                    player.walkSpeed *
+                    0.35
+                );
+
+
+            bobY =
+                Math.sin(
+                    player.cameraBobTime
+                ) *
+                player.cameraBobAmount;
+        } else {
+            player.cameraBobTime = 0;
+        }
 
 
         camera.position.set(
             player.x,
-            player.y,
+            player.y + bobY,
             player.z
         );
     }
@@ -630,24 +922,65 @@
     let joystickCenterY = 0;
 
     const JOYSTICK_MAX = 42;
+    const JOYSTICK_DEADZONE = 0.12;
+
+
+    function applyDeadzone(value) {
+        const abs =
+            Math.abs(value);
+
+        if (
+            abs < JOYSTICK_DEADZONE
+        ) {
+            return 0;
+        }
+
+
+        const normalized =
+            (
+                abs -
+                JOYSTICK_DEADZONE
+            ) /
+            (
+                1 -
+                JOYSTICK_DEADZONE
+            );
+
+
+        return (
+            Math.sign(value) *
+            normalized
+        );
+    }
 
 
     function setJoystickPosition(
         clientX,
         clientY
     ) {
-        let dx = clientX - joystickCenterX;
-        let dy = clientY - joystickCenterY;
+        let dx =
+            clientX -
+            joystickCenterX;
 
-        const distance = Math.hypot(
-            dx,
-            dy
-        );
+        let dy =
+            clientY -
+            joystickCenterY;
 
 
-        if (distance > JOYSTICK_MAX) {
+        const distance =
+            Math.hypot(
+                dx,
+                dy
+            );
+
+
+        if (
+            distance >
+            JOYSTICK_MAX
+        ) {
             const scale =
-                JOYSTICK_MAX / distance;
+                JOYSTICK_MAX /
+                distance;
 
             dx *= scale;
             dy *= scale;
@@ -663,10 +996,17 @@
 
 
         player.joystickRight =
-            dx / JOYSTICK_MAX;
+            applyDeadzone(
+                dx /
+                JOYSTICK_MAX
+            );
+
 
         player.joystickForward =
-            -dy / JOYSTICK_MAX;
+            applyDeadzone(
+                -dy /
+                JOYSTICK_MAX
+            );
     }
 
 
@@ -690,14 +1030,18 @@
             joystickPointerId =
                 event.pointerId;
 
+
             const rect =
                 moveStick.getBoundingClientRect();
 
+
             joystickCenterX =
-                rect.left + rect.width / 2;
+                rect.left +
+                rect.width / 2;
 
             joystickCenterY =
-                rect.top + rect.height / 2;
+                rect.top +
+                rect.height / 2;
 
 
             try {
@@ -705,8 +1049,7 @@
                     event.pointerId
                 );
             } catch (error) {
-                // Safari may reject pointer capture
-                // in some edge cases. Movement still works.
+                // Optional on mobile Safari.
             }
 
 
@@ -715,7 +1058,9 @@
                 event.clientY
             );
         },
-        { passive: false }
+        {
+            passive: false
+        }
     );
 
 
@@ -729,15 +1074,19 @@
                 return;
             }
 
+
             event.preventDefault();
             event.stopPropagation();
+
 
             setJoystickPosition(
                 event.clientX,
                 event.clientY
             );
         },
-        { passive: false }
+        {
+            passive: false
+        }
     );
 
 
@@ -754,7 +1103,9 @@
                 resetJoystick();
             }
         },
-        { passive: false }
+        {
+            passive: false
+        }
     );
 
 
@@ -765,13 +1116,16 @@
 
 
     /* =====================================================
-       TOUCH / MOUSE LOOK
+       LOOK INPUT
     ====================================================== */
 
     let lookPointerId = null;
 
     let lastLookX = 0;
     let lastLookY = 0;
+
+    let pendingLookX = 0;
+    let pendingLookY = 0;
 
 
     function isControl(target) {
@@ -786,20 +1140,33 @@
     gameContainer.addEventListener(
         "pointerdown",
         function (event) {
-            if (isControl(event.target)) {
+            if (
+                isControl(
+                    event.target
+                )
+            ) {
                 return;
             }
 
-            if (lookPointerId !== null) {
+
+            if (
+                lookPointerId !== null
+            ) {
                 return;
             }
+
 
             event.preventDefault();
 
-            lookPointerId = event.pointerId;
 
-            lastLookX = event.clientX;
-            lastLookY = event.clientY;
+            lookPointerId =
+                event.pointerId;
+
+            lastLookX =
+                event.clientX;
+
+            lastLookY =
+                event.clientY;
 
 
             try {
@@ -807,10 +1174,12 @@
                     event.pointerId
                 );
             } catch (error) {
-                // Pointer capture is optional here.
+                // Pointer capture is optional.
             }
         },
-        { passive: false }
+        {
+            passive: false
+        }
     );
 
 
@@ -824,38 +1193,49 @@
                 return;
             }
 
+
             event.preventDefault();
 
+
             const dx =
-                event.clientX - lastLookX;
+                event.clientX -
+                lastLookX;
 
             const dy =
-                event.clientY - lastLookY;
+                event.clientY -
+                lastLookY;
 
-            lastLookX = event.clientX;
-            lastLookY = event.clientY;
+
+            lastLookX =
+                event.clientX;
+
+            lastLookY =
+                event.clientY;
 
 
             const sensitivity =
                 event.pointerType === "touch"
-                    ? 0.0042
-                    : 0.003;
+                    ? player.touchSensitivity
+                    : player.mouseSensitivity;
 
 
-            player.yaw -=
-                dx * sensitivity;
+            pendingLookX +=
+                dx *
+                sensitivity;
 
-            player.pitch -=
-                dy * sensitivity;
-
-
-            updateCameraRotation();
+            pendingLookY +=
+                dy *
+                sensitivity;
         },
-        { passive: false }
+        {
+            passive: false
+        }
     );
 
 
-    function endLook(event) {
+    function endLook(
+        event
+    ) {
         if (
             event.pointerId ===
             lookPointerId
@@ -870,10 +1250,59 @@
         endLook
     );
 
+
     gameContainer.addEventListener(
         "pointercancel",
         endLook
     );
+
+
+    function updateLook() {
+        if (
+            Math.abs(
+                pendingLookX
+            ) < 0.00001 &&
+            Math.abs(
+                pendingLookY
+            ) < 0.00001
+        ) {
+            return;
+        }
+
+
+        /*
+            Apply only part of the pending motion each frame.
+            This makes touch camera movement less jittery.
+        */
+
+        const smoothing = 0.55;
+
+
+        const appliedX =
+            pendingLookX *
+            smoothing;
+
+        const appliedY =
+            pendingLookY *
+            smoothing;
+
+
+        player.yaw -=
+            appliedX;
+
+        player.pitch -=
+            appliedY;
+
+
+        pendingLookX -=
+            appliedX;
+
+        pendingLookY -=
+            appliedY;
+
+
+        updateCameraRotation();
+    }
 
 
     /* =====================================================
@@ -892,6 +1321,7 @@
         player.keyboardForward =
             (keys.w ? 1 : 0) -
             (keys.s ? 1 : 0);
+
 
         player.keyboardRight =
             (keys.d ? 1 : 0) -
@@ -960,10 +1390,7 @@
 
 
     /* =====================================================
-       TEMPORARY FIRE TEST
-
-       This DOES visibly work now so we can confirm
-       the button is receiving input.
+       TEMPORARY FIRE / RELOAD TEST
     ====================================================== */
 
     let magAmmo = 8;
@@ -981,17 +1408,24 @@
 
     function flashCrosshair() {
         const crosshair =
-            document.getElementById("crosshair");
+            document.getElementById(
+                "crosshair"
+            );
 
         if (!crosshair) return;
+
 
         crosshair.style.transform =
             "translate(-50%, -50%) scale(1.45)";
 
-        setTimeout(function () {
-            crosshair.style.transform =
-                "translate(-50%, -50%) scale(1)";
-        }, 80);
+
+        setTimeout(
+            function () {
+                crosshair.style.transform =
+                    "translate(-50%, -50%) scale(1)";
+            },
+            80
+        );
     }
 
 
@@ -1001,22 +1435,24 @@
             event.preventDefault();
             event.stopPropagation();
 
-            if (magAmmo <= 0) {
+
+            if (
+                magAmmo <= 0
+            ) {
                 return;
             }
+
 
             magAmmo -= 1;
 
             updateAmmoHUD();
             flashCrosshair();
         },
-        { passive: false }
+        {
+            passive: false
+        }
     );
 
-
-    /* =====================================================
-       TEMPORARY RELOAD TEST
-    ====================================================== */
 
     reloadButton.addEventListener(
         "pointerdown",
@@ -1024,10 +1460,15 @@
             event.preventDefault();
             event.stopPropagation();
 
-            const magazineSize = 8;
+
+            const magazineSize =
+                8;
+
 
             const needed =
-                magazineSize - magAmmo;
+                magazineSize -
+                magAmmo;
+
 
             if (
                 needed <= 0 ||
@@ -1036,18 +1477,26 @@
                 return;
             }
 
+
             const amount =
                 Math.min(
                     needed,
                     reserveAmmo
                 );
 
-            magAmmo += amount;
-            reserveAmmo -= amount;
+
+            magAmmo +=
+                amount;
+
+            reserveAmmo -=
+                amount;
+
 
             updateAmmoHUD();
         },
-        { passive: false }
+        {
+            passive: false
+        }
     );
 
 
@@ -1087,6 +1536,7 @@
             )
         );
 
+
         renderer.setSize(
             width,
             height,
@@ -1116,7 +1566,8 @@
        GAME LOOP
     ====================================================== */
 
-    const clock = new THREE.Clock();
+    const clock =
+        new THREE.Clock();
 
 
     function animate() {
@@ -1124,12 +1575,15 @@
             animate
         );
 
+
         const deltaTime =
             Math.min(
                 clock.getDelta(),
                 0.05
             );
 
+
+        updateLook();
 
         updatePlayer(
             deltaTime
@@ -1153,8 +1607,9 @@
 
     animate();
 
+
     console.log(
-        "Zombies 3D foundation loaded."
+        "Zombies Build 2 loaded: movement polish + collision."
     );
 
 })();
