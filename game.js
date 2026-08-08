@@ -1,6 +1,6 @@
 /* =========================================================
    ZOMBIES - 3D FOUNDATION TEST
-   BUILD 2: MOVEMENT POLISH + COLLISION
+   BUILD 2.1: MOVEMENT POLISH + HARDENED COLLISION
    Stable non-module build for GitHub Pages + mobile Safari
 ========================================================= */
 
@@ -578,40 +578,28 @@
        COLLISION
     ====================================================== */
 
-    function circleIntersectsBox(
+    /*
+        BUILD 2.1 COLLISION FIX
+
+        Instead of testing a circle against the raw object box,
+        we expand every obstacle by the player's radius and treat
+        the player's X/Z position as a point.
+
+        Movement is also split into small substeps so the player
+        cannot "tunnel" through thin or small objects between frames.
+    */
+
+    function pointInsideExpandedBox(
         x,
         z,
-        radius,
         box
     ) {
-        const closestX =
-            Math.max(
-                box.minX,
-                Math.min(
-                    x,
-                    box.maxX
-                )
-            );
-
-        const closestZ =
-            Math.max(
-                box.minZ,
-                Math.min(
-                    z,
-                    box.maxZ
-                )
-            );
-
-        const dx =
-            x - closestX;
-
-        const dz =
-            z - closestZ;
-
         return (
-            dx * dx +
-            dz * dz
-        ) < radius * radius;
+            x >= box.minX - player.radius &&
+            x <= box.maxX + player.radius &&
+            z >= box.minZ - player.radius &&
+            z <= box.maxZ + player.radius
+        );
     }
 
 
@@ -656,10 +644,9 @@
             i += 1
         ) {
             if (
-                circleIntersectsBox(
+                pointInsideExpandedBox(
                     x,
                     z,
-                    player.radius,
                     collisionBoxes[i]
                 )
             ) {
@@ -672,44 +659,109 @@
     }
 
 
+    function moveSingleCollisionStep(
+        deltaX,
+        deltaZ
+    ) {
+        /*
+            Test X and Z independently so the player slides
+            along walls and crates instead of stopping completely.
+        */
+
+        if (
+            deltaX !== 0
+        ) {
+            const nextX =
+                player.x + deltaX;
+
+            if (
+                !collidesAt(
+                    nextX,
+                    player.z
+                )
+            ) {
+                player.x = nextX;
+            } else {
+                player.velocityX = 0;
+            }
+        }
+
+
+        if (
+            deltaZ !== 0
+        ) {
+            const nextZ =
+                player.z + deltaZ;
+
+            if (
+                !collidesAt(
+                    player.x,
+                    nextZ
+                )
+            ) {
+                player.z = nextZ;
+            } else {
+                player.velocityZ = 0;
+            }
+        }
+    }
+
+
     function moveWithCollision(
         deltaX,
         deltaZ
     ) {
         /*
-            Axis-separated collision is intentionally used here.
+            Break large frame movement into tiny pieces.
 
-            If X is blocked but Z is free (or vice versa), the player
-            slides along the object instead of stopping dead.
+            This prevents tunneling if the phone has a lag spike
+            or the player is moving diagonally at full speed.
         */
 
-        const nextX =
-            player.x + deltaX;
+        const totalDistance =
+            Math.hypot(
+                deltaX,
+                deltaZ
+            );
+
 
         if (
-            !collidesAt(
-                nextX,
-                player.z
-            )
+            totalDistance <= 0
         ) {
-            player.x = nextX;
-        } else {
-            player.velocityX = 0;
+            return;
         }
 
 
-        const nextZ =
-            player.z + deltaZ;
+        const MAX_COLLISION_STEP =
+            0.05;
 
-        if (
-            !collidesAt(
-                player.x,
-                nextZ
-            )
+
+        const steps =
+            Math.max(
+                1,
+                Math.ceil(
+                    totalDistance /
+                    MAX_COLLISION_STEP
+                )
+            );
+
+
+        const stepX =
+            deltaX / steps;
+
+        const stepZ =
+            deltaZ / steps;
+
+
+        for (
+            let i = 0;
+            i < steps;
+            i += 1
         ) {
-            player.z = nextZ;
-        } else {
-            player.velocityZ = 0;
+            moveSingleCollisionStep(
+                stepX,
+                stepZ
+            );
         }
     }
 
@@ -1609,7 +1661,7 @@
 
 
     console.log(
-        "Zombies Build 2 loaded: movement polish + collision."
+        "Zombies Build 2.1 loaded: hardened movement collision."
     );
 
 })();
