@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.24
-   GRIP-DRIVEN RECOIL
+   BUILD 3.25
+   CRISP IMPULSE + NATURAL SETTLE
 ========================================================= */
 
 (function () {
@@ -754,7 +754,7 @@
             0,
 
         recoilPulseDuration:
-            0.128,
+            0.116,
 
         recoilPulseStrength:
             0,
@@ -1614,16 +1614,15 @@
         /*
            Build 3.20 time-based recoil pulse.
 
-           0% -> 18% of the pulse:
-           sharp initial impulse.
+           0% -> 14% of the pulse:
+           very crisp initial impulse.
 
-           18% -> 100%:
-           smooth controlled return to rest.
+           14% -> 100%:
+           fast deceleration into a natural settle.
 
-           Rotation is intentionally reduced here.
-           More of the visible recoil comes from a small
-           whole-weapon rise/back movement so the pistol
-           does not appear to hinge around the bottom edge.
+           The successful 3.24 grip-driven motion is kept.
+           This pass only tightens the timing and impact;
+           the weapon pivot/anchoring is intentionally untouched.
 
            Every new shot restarts this pulse.
         */
@@ -1650,15 +1649,15 @@
 
             if (
                 recoilT <
-                0.18
+                0.14
             ) {
                 /*
-                   Sharp initial impulse.
+                   Very crisp initial impulse.
                 */
 
                 const kickT =
                     recoilT /
-                    0.18;
+                    0.14;
 
 
                 recoilPulse =
@@ -1666,19 +1665,21 @@
                     Math.pow(
                         1 -
                         kickT,
-                        4
+                        5
                     );
             } else {
                 /*
-                   Smooth controlled recovery.
+                   Fast deceleration into a natural settle.
+                   The cubic easing keeps the return smooth
+                   without the floaty tail from 3.24.
                 */
 
                 const recoverT =
                     (
                         recoilT -
-                        0.18
+                        0.14
                     ) /
-                    0.82;
+                    0.86;
 
 
                 recoilPulse =
@@ -1910,7 +1911,7 @@
 
             weapon.basePosition.z +
                 displayRecoil *
-                0.048
+                0.044
         );
 
 
@@ -1923,7 +1924,7 @@
         weapon.group.rotation.set(
             weapon.baseRotation.x +
                 displayRecoil *
-                0.205 +
+                0.215 +
                 reloadPitch,
 
             weapon.baseRotation.y +
@@ -3576,11 +3577,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.24";
+        "3.25";
 
 
     console.log(
-        "ZOMBIES BUILD 3.24 ACTIVE"
+        "ZOMBIES BUILD 3.25 ACTIVE"
     );
 
 
