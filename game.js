@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
    BUILD 3.23
-   STRONGER VISIBLE MUZZLE SNAP
+   MORE VISIBLE MUZZLE SNAP
 ========================================================= */
 
 (function () {
@@ -1589,9 +1589,9 @@
         */
 
         player.pitch +=
-            0.0028 +
+            0.0022 +
             Math.random() *
-            0.0008;
+            0.0007;
 
 
         player.yaw +=
@@ -1614,10 +1614,10 @@
         /*
            Build 3.20 time-based recoil pulse.
 
-           0% -> 21% of the pulse:
-           sharp ease-out snap to peak.
+           0% -> 22% of the pulse:
+           fast, readable ease-out snap to peak.
 
-           21% -> 100%:
+           22% -> 100%:
            quick, smooth return to rest.
 
            Every new shot restarts this pulse.
@@ -1645,16 +1645,15 @@
 
             if (
                 recoilT <
-                0.21
+                0.22
             ) {
                 /*
-                   Sharp ease-out snap to peak, held just long enough
-                   to register clearly on mobile frame rates.
+                   Fast, readable ease-out snap to peak.
                 */
 
                 const kickT =
                     recoilT /
-                    0.21;
+                    0.22;
 
 
                 recoilPulse =
@@ -1672,9 +1671,9 @@
                 const recoverT =
                     (
                         recoilT -
-                        0.21
+                        0.22
                     ) /
-                    0.79;
+                    0.78;
 
 
                 recoilPulse =
@@ -1902,11 +1901,11 @@
                 weapon.swayY +
                 reloadOffsetY +
                 displayRecoil *
-                0.010,
+                0.009,
 
             weapon.basePosition.z +
                 displayRecoil *
-                0.033
+                0.032
         );
 
 
@@ -1919,7 +1918,7 @@
         weapon.group.rotation.set(
             weapon.baseRotation.x +
                 displayRecoil *
-                0.275 +
+                0.285 +
                 reloadPitch,
 
             weapon.baseRotation.y +
@@ -1931,7 +1930,7 @@
                 -0.35 +
                 reloadRoll -
                 displayRecoil *
-                0.004
+                0.006
         );
 
 
