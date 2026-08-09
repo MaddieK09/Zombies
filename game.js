@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.33
-   TRUE SIGHT-ALIGNED ADS
+   BUILD 3.34
+   MODEL-LEVEL TRUE ADS
 ========================================================= */
 
 (function () {
@@ -888,16 +888,16 @@
 
         adsPosition:
             new THREE.Vector3(
-                -0.055,
-                -0.180,
-                -1.18
+                0.0,
+                -0.215,
+                -0.98
             ),
 
         adsRotation:
             new THREE.Euler(
                 -0.010,
-                -Math.PI / 2,
-                0.0
+                -0.040,
+                0.006
             ),
 
         adsAmount:
@@ -1023,6 +1023,20 @@
 
     const weaponModelHolder =
         new THREE.Group();
+
+
+    /*
+       BUILD 3.34
+       Rotate the actual centered pistol geometry for ADS.
+
+       The current hip-fire model points its muzzle toward screen-left.
+       Rotating the centered model holder -90 degrees around Y turns that
+       muzzle direction into camera-forward (-Z): barrel AWAY from player,
+       rear sights TOWARD player.
+    */
+
+    const ADS_MODEL_YAW =
+        -Math.PI / 2;
 
 
     weapon.group.add(
@@ -1746,6 +1760,17 @@
 
 
         weaponCamera.updateProjectionMatrix();
+
+
+        /*
+           Rotate the actual pistol model into the sight line.
+           This is intentionally separate from weapon.group rotation so
+           recoil/bob remain intact while the gun itself turns end-on.
+        */
+
+        weaponModelHolder.rotation.y =
+            ADS_MODEL_YAW *
+            weapon.adsAmount;
 
 
         camera.fov =
@@ -3929,7 +3954,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.33 ACTIVE"
+        "ZOMBIES BUILD 3.34 ACTIVE"
     );
 
 
