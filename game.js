@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.32
-   VISIBLE HOLD-TO-AIM / ADS
+   BUILD 3.33
+   TRUE SIGHT-ALIGNED ADS
 ========================================================= */
 
 (function () {
@@ -888,15 +888,15 @@
 
         adsPosition:
             new THREE.Vector3(
-                0.0,
-                -0.245,
-                -0.92
+                -0.055,
+                -0.180,
+                -1.18
             ),
 
         adsRotation:
             new THREE.Euler(
                 -0.010,
-                0.0,
+                -Math.PI / 2,
                 0.0
             ),
 
@@ -913,7 +913,13 @@
             50,
 
         adsFov:
-            42,
+            48,
+
+        worldHipFov:
+            72,
+
+        worldAdsFov:
+            62,
 
         swayX:
             0,
@@ -1703,7 +1709,7 @@
         speed
     ) {
         /*
-           BUILD 3.32 ADS interpolation.
+           BUILD 3.33 TRUE ADS interpolation.
 
            Hold AIM:
            - raise/center pistol smoothly
@@ -1742,14 +1748,24 @@
         weaponCamera.updateProjectionMatrix();
 
 
+        camera.fov =
+            THREE.MathUtils.lerp(
+                weapon.worldHipFov,
+                weapon.worldAdsFov,
+                weapon.adsAmount
+            );
+
+
+        camera.updateProjectionMatrix();
+
+
         if (
             crosshair
         ) {
             crosshair.style.opacity =
                 String(
                     1 -
-                    weapon.adsAmount *
-                    0.92
+                    weapon.adsAmount
                 );
         }
 
@@ -1895,7 +1911,7 @@
             (
                 1 -
                 weapon.adsAmount *
-                0.72
+                0.90
             );
 
 
@@ -3913,7 +3929,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.32 ACTIVE"
+        "ZOMBIES BUILD 3.33 ACTIVE"
     );
 
 
