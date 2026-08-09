@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.26
-   READABLE IMPULSE TIMING
+   BUILD 3.27
+   ADS PREP - HIP FIRE PRESENTATION
 ========================================================= */
 
 (function () {
@@ -732,16 +732,16 @@
 
         basePosition:
             new THREE.Vector3(
-                0.24,
-                -0.33,
-                -1.12
+                0.27,
+                -0.35,
+                -1.15
             ),
 
         baseRotation:
             new THREE.Euler(
-                -0.015,
-                -0.055,
-                0.010
+                -0.010,
+                -0.040,
+                0.006
             ),
 
         recoil:
@@ -757,6 +757,28 @@
             0.138,
 
         recoilPulseStrength:
+            0,
+
+        /*
+           ADS-ready target transforms.
+           Build 3.27 stores these only; aiming is added next.
+        */
+
+        adsPosition:
+            new THREE.Vector3(
+                0.0,
+                -0.205,
+                -0.88
+            ),
+
+        adsRotation:
+            new THREE.Euler(
+                -0.005,
+                0.0,
+                0.0
+            ),
+
+        adsAmount:
             0,
 
         swayX:
@@ -3579,11 +3601,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.26";
+        "3.27";
 
 
     console.log(
-        "ZOMBIES BUILD 3.26 ACTIVE"
+        "ZOMBIES BUILD 3.27 ACTIVE"
     );
 
 
