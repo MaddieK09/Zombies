@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.27
-   ADS PREP - HIP FIRE PRESENTATION
+   BUILD 3.28
+   REAL PISTOL PBR MATERIAL PASS
 ========================================================= */
 
 (function () {
@@ -164,7 +164,7 @@
         new THREE.HemisphereLight(
             0xffffff,
             0x5f6670,
-            0.32
+            0.72
         );
 
 
@@ -176,7 +176,7 @@
     const weaponKeyLight =
         new THREE.DirectionalLight(
             0xffffff,
-            0.45
+            1.15
         );
 
 
@@ -195,7 +195,7 @@
     const weaponFillLight =
         new THREE.DirectionalLight(
             0xbfd4ff,
-            0.16
+            0.42
         );
 
 
@@ -855,7 +855,7 @@
 
 
     const MODEL_TARGET_LENGTH =
-        0.62;
+        0.70;
 
 
     /*
@@ -950,14 +950,11 @@
                     */
 
                     /*
-                       BUILD 3.7 MATERIAL OVERRIDE
+                       BUILD 3.28 - REAL PISTOL MATERIALS
 
-                       The uploaded GLB geometry is good, but its exported
-                       material is rendering as a pure black silhouette on
-                       iPhone Safari.
-
-                       Instead of trusting the imported material, give the
-                       REAL pistol mesh a fresh gunmetal material in code.
+                       The replacement pistol.glb contains proper PBR
+                       materials/textures. Preserve them instead of replacing
+                       them with the old custom low-poly shader.
                     */
 
                     if (
@@ -969,135 +966,73 @@
                     }
 
 
-                    const meshName =
-                        (
-                            child.name ||
-                            ""
-                        ).toLowerCase();
+                    const importedMaterials =
+                        Array.isArray(
+                            child.material
+                        )
+                            ? child.material
+                            : [
+                                child.material
+                            ];
 
 
-                    let gunColor =
-                        0x343a42;
+                    importedMaterials.forEach(
+                        function (material) {
+                            if (
+                                !material
+                            ) {
+                                return;
+                            }
 
 
-                    /*
-                       BUILD 3.8:
-                       Use an unlit base material so iPhone Safari cannot
-                       wash the pistol out or turn it into a silhouette.
-
-                       Subtle edges preserve the low-poly shape/detail.
-                    */
-
-                    if (
-                        meshName.includes("grip") ||
-                        meshName.includes("handle") ||
-                        meshName.includes("mag")
-                    ) {
-                        gunColor =
-                            0x20252a;
-                    } else if (
-                        meshName.includes("barrel") ||
-                        meshName.includes("trigger") ||
-                        meshName.includes("sight")
-                    ) {
-                        gunColor =
-                            0x2a3036;
-                    }
+                            material.side =
+                                THREE.FrontSide;
 
 
-                    /*
-                       Build 3.13:
-                       Do NOT depend on Three.js scene lighting for the gun.
-
-                       This shader uses the pistol's own normals to create
-                       stable dark/light face separation in camera space.
-                       That makes the low-poly geometry readable even if
-                       Safari/WebGL handles imported materials strangely.
-                    */
-
-                    child.material =
-                        new THREE.ShaderMaterial({
-                            uniforms: {
-                                baseColor: {
-                                    value:
-                                        new THREE.Color(
-                                            gunColor
-                                        )
-                                }
-                            },
-
-                            vertexShader: [
-                                "varying vec3 vNormalView;",
-                                "varying vec3 vViewPosition;",
-
-                                "void main() {",
-                                "    vNormalView = normalize(normalMatrix * normal);",
-                                "",
-                                "    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);",
-                                "    vViewPosition = mvPosition.xyz;",
-                                "",
-                                "    gl_Position = projectionMatrix * mvPosition;",
-                                "}"
-                            ].join("\n"),
-
-                            fragmentShader: [
-                                "uniform vec3 baseColor;",
-                                "",
-                                "varying vec3 vNormalView;",
-                                "varying vec3 vViewPosition;",
-                                "",
-                                "void main() {",
-                                "    vec3 n = normalize(vNormalView);",
-                                "",
-                                "    if (!gl_FrontFacing) {",
-                                "        n = -n;",
-                                "    }",
-                                "",
-                                "    vec3 keyLight = normalize(vec3(-0.55, 0.85, 0.75));",
-                                "    vec3 fillLight = normalize(vec3(0.75, 0.20, 0.50));",
-                                "",
-                                "    float key = max(dot(n, keyLight), 0.0);",
-                                "    float fill = max(dot(n, fillLight), 0.0);",
-                                "",
-                                "    vec3 viewDir = normalize(-vViewPosition);",
-                                "    float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 2.4);",
-                                "",
-                                "    float shade = 0.30 + key * 0.58 + fill * 0.18;",
-                                "",
-                                "    vec3 color = baseColor * shade;",
-                                "    color += vec3(0.12, 0.14, 0.17) * rim * 0.28;",
-                                "",
-                                "    color = clamp(color, 0.0, 1.0);",
-                                "",
-                                "    gl_FragColor = vec4(color, 1.0);",
-                                "}"
-                            ].join("\n"),
-
-                            side:
-                                THREE.DoubleSide,
-
-                            depthTest:
-                                false,
-
-                            depthWrite:
-                                false,
-
-                            transparent:
-                                false,
-
-                            fog:
-                                false
-                        });
+                            material.depthTest =
+                                false;
 
 
-                    child.material.needsUpdate =
-                        true;
+                            material.depthWrite =
+                                false;
 
 
-                    /*
-                       No wireframe/edge overlay in Build 3.10.
-                       The real GLB mesh is rendered as one solid opaque object.
-                    */
+                            material.transparent =
+                                false;
+
+
+                            material.opacity =
+                                1;
+
+
+                            material.fog =
+                                false;
+
+
+                            if (
+                                material.map
+                            ) {
+                                material.map.encoding =
+                                    THREE.sRGBEncoding;
+
+                                material.map.needsUpdate =
+                                    true;
+                            }
+
+
+                            if (
+                                material.isMeshStandardMaterial ||
+                                material.isMeshPhysicalMaterial
+                            ) {
+                                material.envMapIntensity =
+                                    0.65;
+                            }
+
+
+                            material.needsUpdate =
+                                true;
+                        }
+                    );
 
 
                     child.renderOrder =
@@ -3601,11 +3536,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.27";
+        "3.28";
 
 
     console.log(
-        "ZOMBIES BUILD 3.27 ACTIVE"
+        "ZOMBIES BUILD 3.28 ACTIVE"
     );
 
 
