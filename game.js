@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.23
-   MORE VISIBLE MUZZLE SNAP
+   BUILD 3.24
+   GRIP-DRIVEN RECOIL
 ========================================================= */
 
 (function () {
@@ -754,7 +754,7 @@
             0,
 
         recoilPulseDuration:
-            0.132,
+            0.128,
 
         recoilPulseStrength:
             0,
@@ -1614,11 +1614,16 @@
         /*
            Build 3.20 time-based recoil pulse.
 
-           0% -> 22% of the pulse:
-           fast, readable ease-out snap to peak.
+           0% -> 18% of the pulse:
+           sharp initial impulse.
 
-           22% -> 100%:
-           quick, smooth return to rest.
+           18% -> 100%:
+           smooth controlled return to rest.
+
+           Rotation is intentionally reduced here.
+           More of the visible recoil comes from a small
+           whole-weapon rise/back movement so the pistol
+           does not appear to hinge around the bottom edge.
 
            Every new shot restarts this pulse.
         */
@@ -1645,15 +1650,15 @@
 
             if (
                 recoilT <
-                0.22
+                0.18
             ) {
                 /*
-                   Fast, readable ease-out snap to peak.
+                   Sharp initial impulse.
                 */
 
                 const kickT =
                     recoilT /
-                    0.22;
+                    0.18;
 
 
                 recoilPulse =
@@ -1665,15 +1670,15 @@
                     );
             } else {
                 /*
-                   Quick but smoother recovery.
+                   Smooth controlled recovery.
                 */
 
                 const recoverT =
                     (
                         recoilT -
-                        0.22
+                        0.18
                     ) /
-                    0.78;
+                    0.82;
 
 
                 recoilPulse =
@@ -1901,11 +1906,11 @@
                 weapon.swayY +
                 reloadOffsetY +
                 displayRecoil *
-                0.009,
+                0.028,
 
             weapon.basePosition.z +
                 displayRecoil *
-                0.032
+                0.048
         );
 
 
@@ -1918,7 +1923,7 @@
         weapon.group.rotation.set(
             weapon.baseRotation.x +
                 displayRecoil *
-                0.285 +
+                0.205 +
                 reloadPitch,
 
             weapon.baseRotation.y +
@@ -1930,7 +1935,7 @@
                 -0.35 +
                 reloadRoll -
                 displayRecoil *
-                0.006
+                0.003
         );
 
 
@@ -3571,11 +3576,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.23";
+        "3.24";
 
 
     console.log(
-        "ZOMBIES BUILD 3.23 ACTIVE"
+        "ZOMBIES BUILD 3.24 ACTIVE"
     );
 
 
