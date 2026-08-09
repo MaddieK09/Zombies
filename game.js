@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.29
-   CORRECT PISTOL DIRECTION
+   BUILD 3.30
+   BARREL AWAY - FIRST PERSON ORIENTATION
 ========================================================= */
 
 (function () {
@@ -868,15 +868,15 @@
     const MODEL_ROTATION_FIX =
         new THREE.Euler(
             0,
-            Math.PI,
+            Math.PI * 1.5,
             0
         );
 
 
     const MODEL_POSITION_FIX =
         new THREE.Vector3(
-            0.015,
-            -0.015,
+            0.055,
+            -0.045,
             0
         );
 
@@ -3536,11 +3536,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.29";
+        "3.30";
 
 
     console.log(
-        "ZOMBIES BUILD 3.29 ACTIVE"
+        "ZOMBIES BUILD 3.30 ACTIVE"
     );
 
 
