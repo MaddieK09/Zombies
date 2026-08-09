@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.30
-   BARREL AWAY - FIRST PERSON ORIENTATION
+   BUILD 3.31
+   HOLD-TO-AIM / ADS
 ========================================================= */
 
 (function () {
@@ -29,6 +29,108 @@
 
     const reloadButton =
         document.getElementById("reload-button");
+
+
+    /*
+       BUILD 3.31
+       Create a hold-to-aim button in code so ADS does not require
+       index.html or style.css changes.
+    */
+
+    let aimButton =
+        document.getElementById("aim-button");
+
+
+    if (
+        !aimButton
+    ) {
+        aimButton =
+            document.createElement("button");
+
+
+        aimButton.id =
+            "aim-button";
+
+
+        aimButton.type =
+            "button";
+
+
+        aimButton.textContent =
+            "AIM";
+
+
+        aimButton.setAttribute(
+            "aria-label",
+            "Aim down sights"
+        );
+
+
+        aimButton.style.position =
+            "absolute";
+
+
+        aimButton.style.right =
+            "19%";
+
+
+        aimButton.style.bottom =
+            "18%";
+
+
+        aimButton.style.width =
+            "86px";
+
+
+        aimButton.style.height =
+            "64px";
+
+
+        aimButton.style.borderRadius =
+            "22px";
+
+
+        aimButton.style.border =
+            "3px solid rgba(255,255,255,0.55)";
+
+
+        aimButton.style.background =
+            "rgba(35,35,35,0.72)";
+
+
+        aimButton.style.color =
+            "white";
+
+
+        aimButton.style.fontSize =
+            "18px";
+
+
+        aimButton.style.fontWeight =
+            "800";
+
+
+        aimButton.style.zIndex =
+            "20";
+
+
+        aimButton.style.touchAction =
+            "none";
+
+
+        aimButton.style.userSelect =
+            "none";
+
+
+        aimButton.style.webkitUserSelect =
+            "none";
+
+
+        gameContainer.appendChild(
+            aimButton
+        );
+    }
+
 
     const magAmmoElement =
         document.getElementById("mag-ammo");
@@ -767,19 +869,31 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.205,
-                -0.88
+                -0.245,
+                -0.92
             ),
 
         adsRotation:
             new THREE.Euler(
-                -0.005,
+                -0.010,
                 0.0,
                 0.0
             ),
 
         adsAmount:
             0,
+
+        isAiming:
+            false,
+
+        adsSpeed:
+            12,
+
+        hipFov:
+            50,
+
+        adsFov:
+            42,
 
         swayX:
             0,
@@ -1569,6 +1683,58 @@
         speed
     ) {
         /*
+           BUILD 3.31 ADS interpolation.
+
+           Hold AIM:
+           - raise/center pistol smoothly
+           - narrow weapon FOV slightly
+           - fade crosshair
+           - reduce bob/sway while aimed
+        */
+
+        const adsTarget =
+            weapon.isAiming &&
+            !weapon.isReloading
+                ? 1
+                : 0;
+
+
+        weapon.adsAmount +=
+            (
+                adsTarget -
+                weapon.adsAmount
+            ) *
+            Math.min(
+                1,
+                deltaTime *
+                weapon.adsSpeed
+            );
+
+
+        weaponCamera.fov =
+            THREE.MathUtils.lerp(
+                weapon.hipFov,
+                weapon.adsFov,
+                weapon.adsAmount
+            );
+
+
+        weaponCamera.updateProjectionMatrix();
+
+
+        if (
+            crosshair
+        ) {
+            crosshair.style.opacity =
+                String(
+                    1 -
+                    weapon.adsAmount *
+                    0.92
+                );
+        }
+
+
+        /*
            Build 3.20 time-based recoil pulse.
 
            0% -> 28% of the pulse:
@@ -1697,13 +1863,20 @@
 
 
         const bobStrength =
-            moving
-                ? Math.min(
-                    speed /
-                    player.walkSpeed,
-                    1
-                )
-                : 0;
+            (
+                moving
+                    ? Math.min(
+                        speed /
+                        player.walkSpeed,
+                        1
+                    )
+                    : 0
+            ) *
+            (
+                1 -
+                weapon.adsAmount *
+                0.72
+            );
 
 
         const bobX =
@@ -1855,20 +2028,54 @@
             recoilPulse;
 
 
+        const currentBaseX =
+            THREE.MathUtils.lerp(
+                weapon.basePosition.x,
+                weapon.adsPosition.x,
+                weapon.adsAmount
+            );
+
+
+        const currentBaseY =
+            THREE.MathUtils.lerp(
+                weapon.basePosition.y,
+                weapon.adsPosition.y,
+                weapon.adsAmount
+            );
+
+
+        const currentBaseZ =
+            THREE.MathUtils.lerp(
+                weapon.basePosition.z,
+                weapon.adsPosition.z,
+                weapon.adsAmount
+            );
+
+
         weapon.group.position.set(
-            weapon.basePosition.x +
+            currentBaseX +
                 bobX +
-                weapon.swayX +
+                weapon.swayX *
+                (
+                    1 -
+                    weapon.adsAmount *
+                    0.72
+                ) +
                 reloadOffsetX,
 
-            weapon.basePosition.y -
+            currentBaseY -
                 bobY +
-                weapon.swayY +
+                weapon.swayY *
+                (
+                    1 -
+                    weapon.adsAmount *
+                    0.72
+                ) +
                 reloadOffsetY +
                 displayRecoil *
                 0.028,
 
-            weapon.basePosition.z +
+            currentBaseZ +
                 displayRecoil *
                 0.044
         );
@@ -1880,19 +2087,53 @@
            movement and roll minimal.
         */
 
+        const currentBaseRotX =
+            THREE.MathUtils.lerp(
+                weapon.baseRotation.x,
+                weapon.adsRotation.x,
+                weapon.adsAmount
+            );
+
+
+        const currentBaseRotY =
+            THREE.MathUtils.lerp(
+                weapon.baseRotation.y,
+                weapon.adsRotation.y,
+                weapon.adsAmount
+            );
+
+
+        const currentBaseRotZ =
+            THREE.MathUtils.lerp(
+                weapon.baseRotation.z,
+                weapon.adsRotation.z,
+                weapon.adsAmount
+            );
+
+
         weapon.group.rotation.set(
-            weapon.baseRotation.x +
+            currentBaseRotX +
                 displayRecoil *
                 0.215 +
                 reloadPitch,
 
-            weapon.baseRotation.y +
+            currentBaseRotY +
                 weapon.swayX *
-                0.55,
+                0.55 *
+                (
+                    1 -
+                    weapon.adsAmount *
+                    0.72
+                ),
 
-            weapon.baseRotation.z +
+            currentBaseRotZ +
                 bobX *
-                -0.35 +
+                -0.35 *
+                (
+                    1 -
+                    weapon.adsAmount *
+                    0.72
+                ) +
                 reloadRoll -
                 displayRecoil *
                 0.003
@@ -2781,6 +3022,111 @@
 
 
     /* =====================================================
+       AIM / ADS INPUT
+    ====================================================== */
+
+    function setAiming(
+        aiming
+    ) {
+        if (
+            weapon.isReloading
+        ) {
+            aiming =
+                false;
+        }
+
+
+        weapon.isAiming =
+            !!aiming;
+
+
+        aimButton.style.background =
+            weapon.isAiming
+                ? "rgba(85,85,85,0.88)"
+                : "rgba(35,35,35,0.72)";
+    }
+
+
+    aimButton.addEventListener(
+        "pointerdown",
+        function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            setAiming(
+                true
+            );
+
+
+            try {
+                aimButton.setPointerCapture(
+                    event.pointerId
+                );
+            } catch (error) {
+                /* Safari fallback */
+            }
+        },
+        {
+            passive: false
+        }
+    );
+
+
+    function stopAiming(
+        event
+    ) {
+        if (
+            event
+        ) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+
+        setAiming(
+            false
+        );
+    }
+
+
+    aimButton.addEventListener(
+        "pointerup",
+        stopAiming,
+        {
+            passive: false
+        }
+    );
+
+
+    aimButton.addEventListener(
+        "pointercancel",
+        stopAiming,
+        {
+            passive: false
+        }
+    );
+
+
+    aimButton.addEventListener(
+        "pointerleave",
+        function (event) {
+            if (
+                event.buttons ===
+                0
+            ) {
+                stopAiming(
+                    event
+                );
+            }
+        },
+        {
+            passive: false
+        }
+    );
+
+
+    /* =====================================================
        TOUCH / MOUSE LOOK
     ====================================================== */
 
@@ -2811,6 +3157,9 @@
                 target
             ) ||
             reloadButton.contains(
+                target
+            ) ||
+            aimButton.contains(
                 target
             )
         );
@@ -3227,6 +3576,10 @@
 
 
     function startReload() {
+        setAiming(
+            false
+        );
+
         if (
             weapon.isReloading
         ) {
@@ -3536,11 +3889,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.30";
+        "3.31";
 
 
     console.log(
-        "ZOMBIES BUILD 3.30 ACTIVE"
+        "ZOMBIES BUILD 3.31 ACTIVE"
     );
 
 
