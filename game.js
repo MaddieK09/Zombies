@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.28
-   REAL PISTOL PBR MATERIAL PASS
+   BUILD 3.29
+   CORRECT PISTOL DIRECTION
 ========================================================= */
 
 (function () {
@@ -868,15 +868,15 @@
     const MODEL_ROTATION_FIX =
         new THREE.Euler(
             0,
-            0,
+            Math.PI,
             0
         );
 
 
     const MODEL_POSITION_FIX =
         new THREE.Vector3(
-            0,
-            0,
+            0.015,
+            -0.015,
             0
         );
 
@@ -3536,11 +3536,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.28";
+        "3.29";
 
 
     console.log(
-        "ZOMBIES BUILD 3.28 ACTIVE"
+        "ZOMBIES BUILD 3.29 ACTIVE"
     );
 
 
