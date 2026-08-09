@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.22
-   SHARP KICK + CLEAN RECOVERY
+   BUILD 3.23
+   STRONGER VISIBLE MUZZLE SNAP
 ========================================================= */
 
 (function () {
@@ -754,7 +754,7 @@
             0,
 
         recoilPulseDuration:
-            0.118,
+            0.132,
 
         recoilPulseStrength:
             0,
@@ -1589,9 +1589,9 @@
         */
 
         player.pitch +=
-            0.0022 +
+            0.0028 +
             Math.random() *
-            0.0007;
+            0.0008;
 
 
         player.yaw +=
@@ -1614,10 +1614,10 @@
         /*
            Build 3.20 time-based recoil pulse.
 
-           0% -> 16% of the pulse:
-           very sharp ease-out snap to peak.
+           0% -> 21% of the pulse:
+           sharp ease-out snap to peak.
 
-           16% -> 100%:
+           21% -> 100%:
            quick, smooth return to rest.
 
            Every new shot restarts this pulse.
@@ -1645,15 +1645,16 @@
 
             if (
                 recoilT <
-                0.16
+                0.21
             ) {
                 /*
-                   Very sharp ease-out snap to peak.
+                   Sharp ease-out snap to peak, held just long enough
+                   to register clearly on mobile frame rates.
                 */
 
                 const kickT =
                     recoilT /
-                    0.16;
+                    0.21;
 
 
                 recoilPulse =
@@ -1671,9 +1672,9 @@
                 const recoverT =
                     (
                         recoilT -
-                        0.16
+                        0.21
                     ) /
-                    0.84;
+                    0.79;
 
 
                 recoilPulse =
@@ -1901,11 +1902,11 @@
                 weapon.swayY +
                 reloadOffsetY +
                 displayRecoil *
-                0.008,
+                0.010,
 
             weapon.basePosition.z +
                 displayRecoil *
-                0.030
+                0.033
         );
 
 
@@ -1918,7 +1919,7 @@
         weapon.group.rotation.set(
             weapon.baseRotation.x +
                 displayRecoil *
-                0.225 +
+                0.275 +
                 reloadPitch,
 
             weapon.baseRotation.y +
@@ -3571,11 +3572,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.22";
+        "3.23";
 
 
     console.log(
-        "ZOMBIES BUILD 3.22 ACTIVE"
+        "ZOMBIES BUILD 3.23 ACTIVE"
     );
 
 
