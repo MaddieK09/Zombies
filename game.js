@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.25
-   CRISP IMPULSE + NATURAL SETTLE
+   BUILD 3.26
+   READABLE IMPULSE TIMING
 ========================================================= */
 
 (function () {
@@ -754,7 +754,7 @@
             0,
 
         recoilPulseDuration:
-            0.116,
+            0.138,
 
         recoilPulseStrength:
             0,
@@ -1614,15 +1614,16 @@
         /*
            Build 3.20 time-based recoil pulse.
 
-           0% -> 14% of the pulse:
-           very crisp initial impulse.
+           0% -> 28% of the pulse:
+           fast but frame-readable initial impulse.
 
-           14% -> 100%:
-           fast deceleration into a natural settle.
+           28% -> 100%:
+           clean controlled return to rest.
 
-           The successful 3.24 grip-driven motion is kept.
-           This pass only tightens the timing and impact;
-           the weapon pivot/anchoring is intentionally untouched.
+           IMPORTANT:
+           This is a timing-only refinement of 3.25.
+           Pivot, anchoring, recoil magnitude, translation,
+           roll and camera behavior are intentionally unchanged.
 
            Every new shot restarts this pulse.
         */
@@ -1649,15 +1650,17 @@
 
             if (
                 recoilT <
-                0.14
+                0.28
             ) {
                 /*
-                   Very crisp initial impulse.
+                   Fast but frame-readable initial impulse.
+                   This intentionally lasts long enough to
+                   survive 30 FPS mobile rendering.
                 */
 
                 const kickT =
                     recoilT /
-                    0.14;
+                    0.28;
 
 
                 recoilPulse =
@@ -1665,21 +1668,20 @@
                     Math.pow(
                         1 -
                         kickT,
-                        5
+                        4
                     );
             } else {
                 /*
-                   Fast deceleration into a natural settle.
-                   The cubic easing keeps the return smooth
-                   without the floaty tail from 3.24.
+                   Same clean return behavior, with the
+                   remaining pulse time devoted to settling.
                 */
 
                 const recoverT =
                     (
                         recoilT -
-                        0.14
+                        0.28
                     ) /
-                    0.86;
+                    0.72;
 
 
                 recoilPulse =
@@ -3577,11 +3579,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.25";
+        "3.26";
 
 
     console.log(
-        "ZOMBIES BUILD 3.25 ACTIVE"
+        "ZOMBIES BUILD 3.26 ACTIVE"
     );
 
 
