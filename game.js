@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.31
-   HOLD-TO-AIM / ADS
+   BUILD 3.32
+   VISIBLE HOLD-TO-AIM / ADS
 ========================================================= */
 
 (function () {
@@ -32,7 +32,7 @@
 
 
     /*
-       BUILD 3.31
+       BUILD 3.32
        Create a hold-to-aim button in code so ADS does not require
        index.html or style.css changes.
     */
@@ -67,15 +67,15 @@
 
 
         aimButton.style.position =
-            "absolute";
+            "fixed";
 
 
         aimButton.style.right =
-            "19%";
+            "22%";
 
 
         aimButton.style.bottom =
-            "18%";
+            "16%";
 
 
         aimButton.style.width =
@@ -111,7 +111,7 @@
 
 
         aimButton.style.zIndex =
-            "20";
+            "99999";
 
 
         aimButton.style.touchAction =
@@ -126,7 +126,27 @@
             "none";
 
 
-        gameContainer.appendChild(
+        aimButton.style.display =
+            "block";
+
+
+        aimButton.style.visibility =
+            "visible";
+
+
+        aimButton.style.opacity =
+            "1";
+
+
+        aimButton.style.pointerEvents =
+            "auto";
+
+
+        aimButton.style.webkitAppearance =
+            "none";
+
+
+        document.body.appendChild(
             aimButton
         );
     }
@@ -1683,7 +1703,7 @@
         speed
     ) {
         /*
-           BUILD 3.31 ADS interpolation.
+           BUILD 3.32 ADS interpolation.
 
            Hold AIM:
            - raise/center pistol smoothly
@@ -3893,7 +3913,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.31 ACTIVE"
+        "ZOMBIES BUILD 3.32 ACTIVE"
     );
 
 
