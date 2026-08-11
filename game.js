@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.37
-   TRUE FORWARD ADS + TOGGLE
+   BUILD 3.38
+   EXPLICIT SIGHT-ALIGNED ADS
 ========================================================= */
 
 (function () {
@@ -889,13 +889,13 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.105,
-                -0.82
+                -0.060,
+                -0.72
             ),
 
         adsRotation:
             new THREE.Euler(
-                -0.020,
+                0.0,
                 0.0,
                 0.0
             ),
@@ -913,13 +913,13 @@
             50,
 
         adsFov:
-            50,
+            46,
 
         worldHipFov:
             72,
 
         worldAdsFov:
-            62,
+            64,
 
         swayX:
             0,
@@ -1037,6 +1037,31 @@
 
     const ADS_MODEL_YAW =
         0;
+
+
+    /*
+       BUILD 3.38
+       Explicit ADS calibration for the actual GLB.
+
+       Instead of deriving sight alignment from the hip-fire pose,
+       ADS uses a dedicated model-holder transform that is blended in
+       directly. This gives us a deterministic rear-sight/front-sight view.
+    */
+
+    const ADS_MODEL_POSITION =
+        new THREE.Vector3(
+            -0.055,
+            0.055,
+            0.115
+        );
+
+
+    const ADS_MODEL_ROTATION =
+        new THREE.Euler(
+            -0.055,
+            0.0,
+            0.0
+        );
 
 
     weapon.group.add(
@@ -1723,7 +1748,7 @@
         speed
     ) {
         /*
-           BUILD 3.37 TRUE FORWARD ADS interpolation.
+           BUILD 3.38 EXPLICIT ADS interpolation.
 
            Hold AIM:
            - raise/center pistol smoothly
@@ -1763,14 +1788,47 @@
 
 
         /*
-           Keep the actual pistol model forward during ADS.
-           Previous builds yawed this holder by -90 degrees, which turned
-           the pistol sideways instead of looking down its sights.
+           BUILD 3.38
+           Explicitly blend the visible pistol root into a calibrated ADS pose.
+           Hip-fire remains at holder position/rotation zero.
         */
 
-        weaponModelHolder.rotation.y =
-            ADS_MODEL_YAW *
-            weapon.adsAmount;
+        weaponModelHolder.position.set(
+            THREE.MathUtils.lerp(
+                0,
+                ADS_MODEL_POSITION.x,
+                weapon.adsAmount
+            ),
+            THREE.MathUtils.lerp(
+                0,
+                ADS_MODEL_POSITION.y,
+                weapon.adsAmount
+            ),
+            THREE.MathUtils.lerp(
+                0,
+                ADS_MODEL_POSITION.z,
+                weapon.adsAmount
+            )
+        );
+
+
+        weaponModelHolder.rotation.set(
+            THREE.MathUtils.lerp(
+                0,
+                ADS_MODEL_ROTATION.x,
+                weapon.adsAmount
+            ),
+            THREE.MathUtils.lerp(
+                0,
+                ADS_MODEL_ROTATION.y,
+                weapon.adsAmount
+            ),
+            THREE.MathUtils.lerp(
+                0,
+                ADS_MODEL_ROTATION.z,
+                weapon.adsAmount
+            )
+        );
 
 
         camera.fov =
@@ -3917,7 +3975,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.37 ACTIVE"
+        "ZOMBIES BUILD 3.38 ACTIVE"
     );
 
 
