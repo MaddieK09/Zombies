@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.35
-   TRUE SIGHT PICTURE TUNING
+   BUILD 3.36
+   RELIABLE TOGGLE ADS
 ========================================================= */
 
 (function () {
@@ -907,7 +907,7 @@
             false,
 
         adsSpeed:
-            12,
+            18,
 
         hipFov:
             50,
@@ -3112,6 +3112,17 @@
     }
 
 
+    /*
+       BUILD 3.36
+       iPhone Safari was ending the old hold-to-aim state almost
+       immediately on pointerup/pointerleave, so the gun never had
+       enough time to visibly reach the sight picture.
+
+       AIM is now a reliable tap-toggle:
+       tap once = ADS
+       tap again = hip fire
+    */
+
     aimButton.addEventListener(
         "pointerdown",
         function (event) {
@@ -3120,70 +3131,14 @@
 
 
             setAiming(
-                true
+                !weapon.isAiming
             );
 
 
-            try {
-                aimButton.setPointerCapture(
-                    event.pointerId
-                );
-            } catch (error) {
-                /* Safari fallback */
-            }
-        },
-        {
-            passive: false
-        }
-    );
-
-
-    function stopAiming(
-        event
-    ) {
-        if (
-            event
-        ) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-
-
-        setAiming(
-            false
-        );
-    }
-
-
-    aimButton.addEventListener(
-        "pointerup",
-        stopAiming,
-        {
-            passive: false
-        }
-    );
-
-
-    aimButton.addEventListener(
-        "pointercancel",
-        stopAiming,
-        {
-            passive: false
-        }
-    );
-
-
-    aimButton.addEventListener(
-        "pointerleave",
-        function (event) {
-            if (
-                event.buttons ===
-                0
-            ) {
-                stopAiming(
-                    event
-                );
-            }
+            aimButton.textContent =
+                weapon.isAiming
+                    ? "HIP"
+                    : "AIM";
         },
         {
             passive: false
@@ -3645,6 +3600,10 @@
             false
         );
 
+
+        aimButton.textContent =
+            "AIM";
+
         if (
             weapon.isReloading
         ) {
@@ -3958,7 +3917,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.35 ACTIVE"
+        "ZOMBIES BUILD 3.36 ACTIVE"
     );
 
 
