@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.34
-   MODEL-LEVEL TRUE ADS
+   BUILD 3.35
+   TRUE SIGHT PICTURE TUNING
 ========================================================= */
 
 (function () {
@@ -889,15 +889,15 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.215,
-                -0.98
+                -0.155,
+                -1.30
             ),
 
         adsRotation:
             new THREE.Euler(
-                -0.010,
+                -0.045,
                 -0.040,
-                0.006
+                0.0
             ),
 
         adsAmount:
@@ -913,7 +913,7 @@
             50,
 
         adsFov:
-            48,
+            54,
 
         worldHipFov:
             72,
@@ -1789,8 +1789,12 @@
         ) {
             crosshair.style.opacity =
                 String(
-                    1 -
-                    weapon.adsAmount
+                    Math.max(
+                        0,
+                        1 -
+                        weapon.adsAmount *
+                        1.35
+                    )
                 );
         }
 
@@ -3954,7 +3958,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.34 ACTIVE"
+        "ZOMBIES BUILD 3.35 ACTIVE"
     );
 
 
