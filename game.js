@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.41
-   LOWER CLEANER ADS
+   BUILD 3.42
+   SIGHT-LINE ADS CALIBRATION
 ========================================================= */
 
 (function () {
@@ -889,8 +889,8 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.190,
-                -1.14
+                -0.172,
+                -1.22
             ),
 
         adsRotation:
@@ -1067,7 +1067,7 @@
 
     const ADS_MODEL_ROTATION =
         new THREE.Euler(
-            -0.045,
+            -0.065,
             FORWARD_MODEL_YAW,
             0
         );
@@ -1767,7 +1767,7 @@
         speed
     ) {
         /*
-           BUILD 3.41 LOWER CLEANER ADS interpolation.
+           BUILD 3.42 SIGHT-LINE ADS interpolation.
 
            Hold AIM:
            - raise/center pistol smoothly
@@ -3992,7 +3992,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.41 ACTIVE"
+        "ZOMBIES BUILD 3.42 ACTIVE"
     );
 
 
