@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.40
-   LOWER REALISTIC ADS
+   BUILD 3.41
+   LOWER CLEANER ADS
 ========================================================= */
 
 (function () {
@@ -889,8 +889,8 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.155,
-                -1.05
+                -0.190,
+                -1.14
             ),
 
         adsRotation:
@@ -1767,7 +1767,7 @@
         speed
     ) {
         /*
-           BUILD 3.40 LOWER REALISTIC ADS interpolation.
+           BUILD 3.41 LOWER CLEANER ADS interpolation.
 
            Hold AIM:
            - raise/center pistol smoothly
@@ -3992,7 +3992,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.40 ACTIVE"
+        "ZOMBIES BUILD 3.41 ACTIVE"
     );
 
 
