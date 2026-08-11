@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.45
-   FINAL ADS NUDGE + MAG RELOAD V1
+   BUILD 3.46
+   WRIST PIVOT ADS + RELOAD V2
 ========================================================= */
 
 (function () {
@@ -889,8 +889,8 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.255,
-                -1.34
+                -0.215,
+                -1.38
             ),
 
         adsRotation:
@@ -1067,7 +1067,7 @@
 
     const ADS_MODEL_ROTATION =
         new THREE.Euler(
-            -0.115,
+            -0.145,
             FORWARD_MODEL_YAW,
             0
         );
@@ -1667,7 +1667,7 @@
                 ),
                 THREE.MathUtils.lerp(
                     -0.24,
-                    -0.58,
+                    -0.72,
                     phase
                 ),
                 THREE.MathUtils.lerp(
@@ -1730,7 +1730,7 @@
                 insertPhase
             ),
             THREE.MathUtils.lerp(
-                -0.62,
+                -0.76,
                 -0.24,
                 insertPhase
             ),
@@ -2396,24 +2396,24 @@
 
 
             reloadOffsetY =
-                -0.185 *
+                -0.235 *
                 reloadPose +
                 magClick *
                 0.018;
 
 
             reloadOffsetX =
-                -0.055 *
+                -0.085 *
                 reloadPose;
 
 
             reloadRoll =
-                -0.285 *
+                -0.42 *
                 reloadPose;
 
 
             reloadPitch =
-                0.125 *
+                0.18 *
                 reloadPose -
                 magClick *
                 0.055;
@@ -4256,11 +4256,11 @@
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.45";
+        "3.46";
 
 
     console.log(
-        "ZOMBIES BUILD 3.45 ACTIVE"
+        "ZOMBIES BUILD 3.46 ACTIVE"
     );
 
 
