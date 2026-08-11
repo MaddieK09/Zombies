@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.43
-   REAR-SIGHT ADS
+   BUILD 3.44
+   FINAL ADS NUDGE + MAG RELOAD V1
 ========================================================= */
 
 (function () {
@@ -889,8 +889,8 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.225,
-                -1.26
+                -0.236,
+                -1.29
             ),
 
         adsRotation:
@@ -1067,7 +1067,7 @@
 
     const ADS_MODEL_ROTATION =
         new THREE.Euler(
-            -0.082,
+            -0.088,
             FORWARD_MODEL_YAW,
             0
         );
@@ -1534,6 +1534,227 @@
 
 
     /*
+       BUILD 3.44
+       Magazine reload visual.
+
+       The imported pistol GLB does not expose a clean named magazine
+       part yet, so this first pass adds a dedicated dark magazine proxy
+       that drops out and inserts back into the grip during reload.
+    */
+
+    const reloadMagazineMaterial =
+        new THREE.MeshStandardMaterial({
+            color: 0x101114,
+            roughness: 0.72,
+            metalness: 0.35,
+            transparent: true,
+            opacity: 0,
+            depthTest: false,
+            depthWrite: false,
+            fog: false
+        });
+
+
+    const reloadMagazine =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                0.105,
+                0.255,
+                0.070
+            ),
+            reloadMagazineMaterial
+        );
+
+
+    reloadMagazine.position.set(
+        0.01,
+        -0.24,
+        0.02
+    );
+
+
+    reloadMagazine.renderOrder =
+        1003;
+
+
+    reloadMagazine.visible =
+        false;
+
+
+    weaponModelHolder.add(
+        reloadMagazine
+    );
+
+
+    function clamp01(
+        value
+    ) {
+        return THREE.MathUtils.clamp(
+            value,
+            0,
+            1
+        );
+    }
+
+
+    function smooth01(
+        value
+    ) {
+        const t =
+            clamp01(
+                value
+            );
+
+        return t *
+            t *
+            (
+                3 -
+                2 *
+                t
+            );
+    }
+
+
+    function updateReloadMagazine(
+        t
+    ) {
+        if (
+            !weapon.isReloading
+        ) {
+            reloadMagazine.visible =
+                false;
+
+            reloadMagazineMaterial.opacity =
+                0;
+
+            return;
+        }
+
+
+        reloadMagazine.visible =
+            true;
+
+
+        /*
+           0.00 -> 0.34: old magazine drops free.
+           0.34 -> 0.48: gap while hand would grab the fresh mag.
+           0.48 -> 0.82: fresh magazine comes up and seats into the grip.
+        */
+
+        if (
+            t < 0.34
+        ) {
+            const phase =
+                smooth01(
+                    t /
+                    0.34
+                );
+
+
+            reloadMagazineMaterial.opacity =
+                THREE.MathUtils.lerp(
+                    1,
+                    0.72,
+                    phase
+                );
+
+
+            reloadMagazine.position.set(
+                THREE.MathUtils.lerp(
+                    0.01,
+                    -0.035,
+                    phase
+                ),
+                THREE.MathUtils.lerp(
+                    -0.24,
+                    -0.58,
+                    phase
+                ),
+                THREE.MathUtils.lerp(
+                    0.02,
+                    0.09,
+                    phase
+                )
+            );
+
+
+            reloadMagazine.rotation.set(
+                0,
+                0,
+                THREE.MathUtils.lerp(
+                    0,
+                    0.18,
+                    phase
+                )
+            );
+
+            return;
+        }
+
+
+        if (
+            t < 0.48
+        ) {
+            reloadMagazineMaterial.opacity =
+                0;
+
+            reloadMagazine.visible =
+                false;
+
+            return;
+        }
+
+
+        const insertPhase =
+            smooth01(
+                (
+                    t -
+                    0.48
+                ) /
+                0.34
+            );
+
+
+        reloadMagazineMaterial.opacity =
+            THREE.MathUtils.lerp(
+                0.78,
+                1,
+                insertPhase
+            );
+
+
+        reloadMagazine.position.set(
+            THREE.MathUtils.lerp(
+                0.070,
+                0.01,
+                insertPhase
+            ),
+            THREE.MathUtils.lerp(
+                -0.62,
+                -0.24,
+                insertPhase
+            ),
+            THREE.MathUtils.lerp(
+                0.10,
+                0.02,
+                insertPhase
+            )
+        );
+
+
+        reloadMagazine.rotation.set(
+            0,
+            0,
+            THREE.MathUtils.lerp(
+                -0.14,
+                0,
+                insertPhase
+            )
+        );
+    }
+
+
+    /*
        Raycaster used by hitscan weapons.
     */
 
@@ -1767,7 +1988,7 @@
         speed
     ) {
         /*
-           BUILD 3.43 REAR-SIGHT ADS interpolation.
+           BUILD 3.44 FINAL ADS + MAG RELOAD interpolation.
 
            Hold AIM:
            - raise/center pistol smoothly
@@ -2101,6 +2322,15 @@
 
 
         if (
+            !weapon.isReloading
+        ) {
+            updateReloadMagazine(
+                0
+            );
+        }
+
+
+        if (
             weapon.isReloading
         ) {
             weapon.reloadTime +=
@@ -2115,40 +2345,78 @@
                 );
 
 
+            updateReloadMagazine(
+                t
+            );
+
+
             /*
-               Down -> rotate -> come back.
+               BUILD 3.44 reload animation.
+
+               Phase 1: lower and cant the gun so the magazine well is visible.
+               Phase 2: hold the pistol steady while the mag drops/inserts.
+               Phase 3: quick settle/snap back to ready.
             */
 
-            reloadOffsetY =
-                -Math.sin(
+            const lowerT =
+                smooth01(
+                    t /
+                    0.18
+                );
+
+
+            const returnT =
+                smooth01(
+                    (
+                        t -
+                        0.76
+                    ) /
+                    0.24
+                );
+
+
+            const reloadPose =
+                t < 0.76
+                    ? lowerT
+                    : 1 -
+                        returnT;
+
+
+            const magClick =
+                Math.sin(
                     Math.PI *
-                    t
-                ) *
-                0.16;
+                    clamp01(
+                        (
+                            t -
+                            0.72
+                        ) /
+                        0.14
+                    )
+                );
+
+
+            reloadOffsetY =
+                -0.185 *
+                reloadPose +
+                magClick *
+                0.018;
 
 
             reloadOffsetX =
-                Math.sin(
-                    Math.PI *
-                    t
-                ) *
-                0.035;
+                -0.055 *
+                reloadPose;
 
 
             reloadRoll =
-                Math.sin(
-                    Math.PI *
-                    t
-                ) *
-                -0.38;
+                -0.285 *
+                reloadPose;
 
 
             reloadPitch =
-                Math.sin(
-                    Math.PI *
-                    t
-                ) *
-                0.16;
+                0.125 *
+                reloadPose -
+                magClick *
+                0.055;
 
 
             if (
@@ -3984,15 +4252,15 @@
 
     /*
        Definitive runtime version marker.
-       index.html cache-busts this file with ?v=39.
+       index.html / Safari should load this file with ?v=344.
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.31";
+        "3.44";
 
 
     console.log(
-        "ZOMBIES BUILD 3.43 ACTIVE"
+        "ZOMBIES BUILD 3.44 ACTIVE"
     );
 
 
@@ -4006,7 +4274,7 @@
 
 
     console.log(
-        "Zombies Build 3.4b loaded: root-level real GLB pistol model."
+        "Zombies Build 3.44 loaded: final ADS nudge and magazine reload V1."
     );
 
 })();
