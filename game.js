@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.38
-   EXPLICIT SIGHT-ALIGNED ADS
+   BUILD 3.39
+   FORWARD-FACING HIP + ADS
 ========================================================= */
 
 (function () {
@@ -889,13 +889,13 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.060,
-                -0.72
+                -0.120,
+                -1.05
             ),
 
         adsRotation:
             new THREE.Euler(
-                0.0,
+                -0.020,
                 0.0,
                 0.0
             ),
@@ -1015,7 +1015,7 @@
 
     const MODEL_POSITION_FIX =
         new THREE.Vector3(
-            0.055,
+            0.0,
             -0.045,
             0
         );
@@ -1026,42 +1026,61 @@
 
 
     /*
-       BUILD 3.37
-       The imported pistol is already normalized so its long/barrel axis
-       runs along local Z. Do NOT add another 90-degree holder yaw in ADS:
-       that extra yaw was the reason the gun appeared sideways.
+       BUILD 3.39
+       The pistol must NEVER show a broad side profile in first person.
 
-       ADS now keeps the pistol's forward orientation and only moves the
-       weapon onto the center sight line.
+       The model-holder yaw that produced the correct "rear toward player /
+       barrel away" orientation in the earlier ADS test is now the permanent
+       orientation for BOTH hip-fire and ADS.
+
+       Hip-fire = forward-facing pistol, offset lower-right.
+       ADS      = same forward-facing pistol, moved onto the sight line.
     */
 
-    const ADS_MODEL_YAW =
-        0;
+    const FORWARD_MODEL_YAW =
+        -Math.PI / 2;
 
 
-    /*
-       BUILD 3.38
-       Explicit ADS calibration for the actual GLB.
+    const HIP_MODEL_POSITION =
+        new THREE.Vector3(
+            0,
+            0,
+            0
+        );
 
-       Instead of deriving sight alignment from the hip-fire pose,
-       ADS uses a dedicated model-holder transform that is blended in
-       directly. This gives us a deterministic rear-sight/front-sight view.
-    */
+
+    const HIP_MODEL_ROTATION =
+        new THREE.Euler(
+            0,
+            FORWARD_MODEL_YAW,
+            0
+        );
+
 
     const ADS_MODEL_POSITION =
         new THREE.Vector3(
-            -0.055,
-            0.055,
-            0.115
+            0,
+            0.045,
+            0.085
         );
 
 
     const ADS_MODEL_ROTATION =
         new THREE.Euler(
-            -0.055,
-            0.0,
-            0.0
+            -0.045,
+            FORWARD_MODEL_YAW,
+            0
         );
+
+
+    weaponModelHolder.position.copy(
+        HIP_MODEL_POSITION
+    );
+
+
+    weaponModelHolder.rotation.copy(
+        HIP_MODEL_ROTATION
+    );
 
 
     weapon.group.add(
@@ -1748,7 +1767,7 @@
         speed
     ) {
         /*
-           BUILD 3.38 EXPLICIT ADS interpolation.
+           BUILD 3.39 FORWARD HIP + ADS interpolation.
 
            Hold AIM:
            - raise/center pistol smoothly
@@ -1788,24 +1807,26 @@
 
 
         /*
-           BUILD 3.38
-           Explicitly blend the visible pistol root into a calibrated ADS pose.
-           Hip-fire remains at holder position/rotation zero.
+           BUILD 3.39
+           Blend between two FORWARD-FACING model poses.
+
+           The yaw is forward-facing in both states, so the weapon can no
+           longer rotate into a broad side profile when entering/exiting ADS.
         */
 
         weaponModelHolder.position.set(
             THREE.MathUtils.lerp(
-                0,
+                HIP_MODEL_POSITION.x,
                 ADS_MODEL_POSITION.x,
                 weapon.adsAmount
             ),
             THREE.MathUtils.lerp(
-                0,
+                HIP_MODEL_POSITION.y,
                 ADS_MODEL_POSITION.y,
                 weapon.adsAmount
             ),
             THREE.MathUtils.lerp(
-                0,
+                HIP_MODEL_POSITION.z,
                 ADS_MODEL_POSITION.z,
                 weapon.adsAmount
             )
@@ -1814,17 +1835,13 @@
 
         weaponModelHolder.rotation.set(
             THREE.MathUtils.lerp(
-                0,
+                HIP_MODEL_ROTATION.x,
                 ADS_MODEL_ROTATION.x,
                 weapon.adsAmount
             ),
+            FORWARD_MODEL_YAW,
             THREE.MathUtils.lerp(
-                0,
-                ADS_MODEL_ROTATION.y,
-                weapon.adsAmount
-            ),
-            THREE.MathUtils.lerp(
-                0,
+                HIP_MODEL_ROTATION.z,
                 ADS_MODEL_ROTATION.z,
                 weapon.adsAmount
             )
@@ -3975,7 +3992,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.38 ACTIVE"
+        "ZOMBIES BUILD 3.39 ACTIVE"
     );
 
 
