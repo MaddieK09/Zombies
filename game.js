@@ -1,6 +1,6 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.44
+   BUILD 3.45
    FINAL ADS NUDGE + MAG RELOAD V1
 ========================================================= */
 
@@ -889,8 +889,8 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.236,
-                -1.29
+                -0.255,
+                -1.34
             ),
 
         adsRotation:
@@ -1067,7 +1067,7 @@
 
     const ADS_MODEL_ROTATION =
         new THREE.Euler(
-            -0.088,
+            -0.115,
             FORWARD_MODEL_YAW,
             0
         );
@@ -1534,7 +1534,7 @@
 
 
     /*
-       BUILD 3.44
+       BUILD 3.45
        Magazine reload visual.
 
        The imported pistol GLB does not expose a clean named magazine
@@ -4252,15 +4252,15 @@
 
     /*
        Definitive runtime version marker.
-       index.html / Safari should load this file with ?v=344.
+       index.html / Safari should load this file with ?v=345.
     */
 
     document.documentElement.dataset.zombiesBuild =
-        "3.44";
+        "3.45";
 
 
     console.log(
-        "ZOMBIES BUILD 3.44 ACTIVE"
+        "ZOMBIES BUILD 3.45 ACTIVE"
     );
 
 
