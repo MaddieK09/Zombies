@@ -1,7 +1,7 @@
 /* =========================================================
    ZOMBIES
-   BUILD 3.36
-   RELIABLE TOGGLE ADS
+   BUILD 3.37
+   TRUE FORWARD ADS + TOGGLE
 ========================================================= */
 
 (function () {
@@ -889,14 +889,14 @@
         adsPosition:
             new THREE.Vector3(
                 0.0,
-                -0.155,
-                -1.30
+                -0.105,
+                -0.82
             ),
 
         adsRotation:
             new THREE.Euler(
-                -0.045,
-                -0.040,
+                -0.020,
+                0.0,
                 0.0
             ),
 
@@ -913,7 +913,7 @@
             50,
 
         adsFov:
-            54,
+            50,
 
         worldHipFov:
             72,
@@ -1026,17 +1026,17 @@
 
 
     /*
-       BUILD 3.34
-       Rotate the actual centered pistol geometry for ADS.
+       BUILD 3.37
+       The imported pistol is already normalized so its long/barrel axis
+       runs along local Z. Do NOT add another 90-degree holder yaw in ADS:
+       that extra yaw was the reason the gun appeared sideways.
 
-       The current hip-fire model points its muzzle toward screen-left.
-       Rotating the centered model holder -90 degrees around Y turns that
-       muzzle direction into camera-forward (-Z): barrel AWAY from player,
-       rear sights TOWARD player.
+       ADS now keeps the pistol's forward orientation and only moves the
+       weapon onto the center sight line.
     */
 
     const ADS_MODEL_YAW =
-        -Math.PI / 2;
+        0;
 
 
     weapon.group.add(
@@ -1723,7 +1723,7 @@
         speed
     ) {
         /*
-           BUILD 3.33 TRUE ADS interpolation.
+           BUILD 3.37 TRUE FORWARD ADS interpolation.
 
            Hold AIM:
            - raise/center pistol smoothly
@@ -1763,9 +1763,9 @@
 
 
         /*
-           Rotate the actual pistol model into the sight line.
-           This is intentionally separate from weapon.group rotation so
-           recoil/bob remain intact while the gun itself turns end-on.
+           Keep the actual pistol model forward during ADS.
+           Previous builds yawed this holder by -90 degrees, which turned
+           the pistol sideways instead of looking down its sights.
         */
 
         weaponModelHolder.rotation.y =
@@ -3917,7 +3917,7 @@
 
 
     console.log(
-        "ZOMBIES BUILD 3.36 ACTIVE"
+        "ZOMBIES BUILD 3.37 ACTIVE"
     );
 
 
